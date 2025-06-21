@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,8 +15,10 @@ import { ArrowLeft, Check, X } from 'lucide-react';
 import Header from '../components/Header';
 import AddGarmentModal from '../components/AddGarmentModal';
 import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
+import SellConfirmDialog from '../components/SellConfirmDialog';
 import { useDataStore } from '../hooks/useDataStore';
 import { useToast } from '@/hooks/use-toast';
+import { sendWhatsAppMessage } from '../utils/whatsappUtils';
 
 const SupplierDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +28,12 @@ const SupplierDetail: React.FC = () => {
   const { suppliers, addGarment, markAsSold, deleteGarment, getGarmentsBySupplier } = useDataStore();
   
   const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    garmentId: number | null;
+    garmentName: string;
+  }>({ open: false, garmentId: null, garmentName: '' });
+
+  const [sellDialog, setSellDialog] = useState<{
     open: boolean;
     garmentId: number | null;
     garmentName: string;
@@ -52,12 +59,30 @@ const SupplierDetail: React.FC = () => {
     );
   }
 
-  const handleMarkAsSold = (garmentId: number, garmentName: string) => {
-    markAsSold(garmentId);
-    toast({
-      title: "Prenda vendida",
-      description: `${garmentName} marcada como vendida`,
+  const handleMarkAsSoldClick = (garmentId: number, garmentName: string) => {
+    setSellDialog({
+      open: true,
+      garmentId,
+      garmentName
     });
+  };
+
+  const handleSellConfirm = () => {
+    if (sellDialog.garmentId && supplier) {
+      const garment = garments.find(g => g.id === sellDialog.garmentId);
+      if (garment) {
+        markAsSold(sellDialog.garmentId);
+        
+        // Enviar mensaje de WhatsApp
+        sendWhatsAppMessage(supplier, garment);
+        
+        toast({
+          title: "Prenda vendida",
+          description: `${sellDialog.garmentName} marcada como vendida y mensaje de WhatsApp enviado`,
+        });
+      }
+    }
+    setSellDialog({ open: false, garmentId: null, garmentName: '' });
   };
 
   const handleDeleteClick = (garmentId: number, garmentName: string) => {
@@ -195,7 +220,7 @@ const SupplierDetail: React.FC = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleMarkAsSold(garment.id, garment.name)}
+                                onClick={() => handleMarkAsSoldClick(garment.id, garment.name)}
                                 className="text-green-600 border-green-600 hover:bg-green-50"
                               >
                                 <Check className="w-4 h-4" />
@@ -228,6 +253,13 @@ const SupplierDetail: React.FC = () => {
         onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}
         onConfirm={handleDeleteConfirm}
         itemName={deleteDialog.garmentName}
+      />
+
+      <SellConfirmDialog
+        open={sellDialog.open}
+        onOpenChange={(open) => setSellDialog(prev => ({ ...prev, open }))}
+        onConfirm={handleSellConfirm}
+        garmentName={sellDialog.garmentName}
       />
     </div>
   );
