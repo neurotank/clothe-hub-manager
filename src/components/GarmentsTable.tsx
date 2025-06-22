@@ -86,16 +86,28 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
               <TableCell className="font-medium">
                 <div>
                   <div className="font-medium">{garment.code}</div>
-                  <div className="sm:hidden text-xs text-gray-500">
-                    {garment.size} • {formatPrice(garment.salePrice)}
+                  <div className="sm:hidden text-xs text-gray-500 mt-1">
+                    Talle: {garment.size}
                   </div>
                 </div>
               </TableCell>
               <TableCell>
                 <div>
                   <div className="font-medium">{garment.name}</div>
-                  <div className="sm:hidden text-xs text-gray-500">
-                    Creado: {formatDate(garment.createdAt)}
+                  <div className="sm:hidden text-xs text-gray-500 mt-1">
+                    <div className="flex flex-col space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-blue-600 font-medium">Compra:</span>
+                        <span className="font-semibold">{formatPrice(garment.purchasePrice)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-green-600 font-medium">Venta:</span>
+                        <span className="font-semibold">{formatPrice(garment.salePrice)}</span>
+                      </div>
+                      <div className="text-gray-400 text-xs">
+                        Creado: {formatDate(garment.createdAt)}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </TableCell>
@@ -130,10 +142,10 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
                       size="sm"
                       variant="outline"
                       onClick={() => onMarkAsSold(garment.id, garment.name)}
-                      className="text-green-600 border-green-600 hover:bg-green-50 text-xs"
+                      className="text-green-600 border-green-600 hover:bg-green-50 text-xs px-2 py-1 h-auto min-h-[32px]"
                     >
                       <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="ml-1">Vender</span>
+                      <span className="ml-1 hidden sm:inline">Vender</span>
                     </Button>
                   )}
                   {garment.isSold && garment.paymentStatus === 'pending' && (
@@ -141,20 +153,20 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
                       size="sm"
                       variant="outline"
                       onClick={() => onMarkAsPaid(garment.id, garment.name)}
-                      className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs"
+                      className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs px-2 py-1 h-auto min-h-[32px]"
                     >
                       <DollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="ml-1">Pagar</span>
+                      <span className="ml-1 hidden sm:inline">Pagar</span>
                     </Button>
                   )}
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => onDelete(garment.id, garment.name)}
-                    className="text-red-600 border-red-600 hover:bg-red-50 text-xs"
+                    className="text-red-600 border-red-600 hover:bg-red-50 text-xs px-2 py-1 h-auto min-h-[32px]"
                   >
                     <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span className="ml-1">Eliminar</span>
+                    <span className="ml-1 hidden sm:inline">Eliminar</span>
                   </Button>
                 </div>
               </TableCell>
