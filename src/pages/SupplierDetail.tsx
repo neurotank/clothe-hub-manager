@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,8 @@ import GarmentsTable from '../components/GarmentsTable';
 import AddGarmentModal from '../components/AddGarmentModal';
 import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
 import SellConfirmDialog from '../components/SellConfirmDialog';
+import PaymentConfirmDialog from '../components/PaymentConfirmDialog';
+import SearchAndFilters from '../components/SearchAndFilters';
 import { useDataStore } from '../hooks/useDataStore';
 import { useToast } from '@/hooks/use-toast';
 import { sendWhatsAppMessage } from '../utils/whatsappUtils';
@@ -19,8 +21,9 @@ const SupplierDetail: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const { suppliers, addGarment, markAsSold, deleteGarment, getGarmentsBySupplier } = useDataStore();
+  const { suppliers, addGarment, markAsSold, markAsPaid, deleteGarment, getGarmentsBySupplier } = useDataStore();
   
+  // Estados para los diálogos
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
     garmentId: number | null;
@@ -33,9 +36,37 @@ const SupplierDetail: React.FC = () => {
     garmentName: string;
   }>({ open: false, garmentId: null, garmentName: '' });
 
+  const [paymentDialog, setPaymentDialog] = useState<{
+    open: boolean;
+    garmentId: number | null;
+    garmentName: string;
+  }>({ open: false, garmentId: null, garmentName: '' });
+
+  // Estados para búsqueda y filtros
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
+
   const supplierId = parseInt(id || '0');
   const supplier = suppliers.find(s => s.id === supplierId);
-  const garments = getGarmentsBySupplier(supplierId);
+  const allGarments = getGarmentsBySupplier(supplierId);
+
+  // Filtrar prendas basado en búsqueda y filtros
+  const filteredGarments = useMemo(() => {
+    return allGarments.filter(garment => {
+      const matchesSearch = 
+        garment.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        garment.name.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus = 
+        statusFilter === 'all' ||
+        (statusFilter === 'available' && !garment.isSold) ||
+        (statusFilter === 'sold' && garment.isSold) ||
+        (statusFilter === 'pending_payment' && garment.paymentStatus === 'pending') ||
+        (statusFilter === 'paid' && garment.paymentStatus === 'paid');
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [allGarments, searchTerm, statusFilter]);
 
   if (!supplier) {
     return (
@@ -63,7 +94,7 @@ const SupplierDetail: React.FC = () => {
 
   const handleSellConfirm = () => {
     if (sellDialog.garmentId && supplier) {
-      const garment = garments.find(g => g.id === sellDialog.garmentId);
+      const garment = allGarments.find(g => g.id === sellDialog.garmentId);
       if (garment) {
         markAsSold(sellDialog.garmentId);
         
@@ -77,6 +108,25 @@ const SupplierDetail: React.FC = () => {
       }
     }
     setSellDialog({ open: false, garmentId: null, garmentName: '' });
+  };
+
+  const handleMarkAsPaidClick = (garmentId: number, garmentName: string) => {
+    setPaymentDialog({
+      open: true,
+      garmentId,
+      garmentName
+    });
+  };
+
+  const handlePaymentConfirm = () => {
+    if (paymentDialog.garmentId) {
+      markAsPaid(paymentDialog.garmentId);
+      toast({
+        title: "Pago confirmado",
+        description: `${paymentDialog.garmentName} marcada como pagada`,
+      });
+    }
+    setPaymentDialog({ open: false, garmentId: null, garmentName: '' });
   };
 
   const handleDeleteClick = (garmentId: number, garmentName: string) => {
@@ -98,8 +148,9 @@ const SupplierDetail: React.FC = () => {
     setDeleteDialog({ open: false, garmentId: null, garmentName: '' });
   };
 
-  const availableGarments = garments.filter(g => !g.isSold);
-  const soldGarments = garments.filter(g => g.isSold);
+  const availableGarments = allGarments.filter(g => !g.isSold);
+  const soldGarments = allGarments.filter(g => g.isSold);
+  const pendingPayment = allGarments.filter(g => g.paymentStatus === 'pending');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -122,12 +173,15 @@ const SupplierDetail: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
           <div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Prendas en Consignación</h2>
-            <div className="flex space-x-4 text-sm">
-              <span className="text-green-600 font-medium">
+            <div className="flex flex-wrap gap-2 text-sm">
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded-md font-medium">
                 {availableGarments.length} disponibles
               </span>
-              <span className="text-gray-500">
+              <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md">
                 {soldGarments.length} vendidas
+              </span>
+              <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-md">
+                {pendingPayment.length} pago pendiente
               </span>
             </div>
           </div>
@@ -136,12 +190,26 @@ const SupplierDetail: React.FC = () => {
           </div>
         </div>
 
+        <SearchAndFilters
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+        />
+
         <Card>
           <CardHeader>
-            <CardTitle>Inventario de Prendas</CardTitle>
+            <CardTitle>
+              Inventario de Prendas 
+              {filteredGarments.length !== allGarments.length && (
+                <span className="text-sm font-normal text-gray-500 ml-2">
+                  ({filteredGarments.length} de {allGarments.length})
+                </span>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            {garments.length === 0 ? (
+            {allGarments.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500 mb-4">
                   No hay prendas registradas para este proveedor
@@ -150,8 +218,9 @@ const SupplierDetail: React.FC = () => {
               </div>
             ) : (
               <GarmentsTable 
-                garments={garments}
+                garments={filteredGarments}
                 onMarkAsSold={handleMarkAsSoldClick}
+                onMarkAsPaid={handleMarkAsPaidClick}
                 onDelete={handleDeleteClick}
               />
             )}
@@ -171,6 +240,13 @@ const SupplierDetail: React.FC = () => {
         onOpenChange={(open) => setSellDialog(prev => ({ ...prev, open }))}
         onConfirm={handleSellConfirm}
         garmentName={sellDialog.garmentName}
+      />
+
+      <PaymentConfirmDialog
+        open={paymentDialog.open}
+        onOpenChange={(open) => setPaymentDialog(prev => ({ ...prev, open }))}
+        onConfirm={handlePaymentConfirm}
+        garmentName={paymentDialog.garmentName}
       />
     </div>
   );
