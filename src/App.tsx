@@ -9,6 +9,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import SupplierDetail from "./pages/SupplierDetail";
+import AdminSoldGarments from "./pages/AdminSoldGarments";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,11 @@ const App = () => (
             <Route path="/supplier/:id" element={
               <ProtectedRoute>
                 <SupplierDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/sold-garments" element={
+              <ProtectedRoute>
+                <AdminSoldGarments />
               </ProtectedRoute>
             } />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

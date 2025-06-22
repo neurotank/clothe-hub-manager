@@ -11,17 +11,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Plus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import Header from '../components/Header';
 import SearchAndFilters from '../components/SearchAndFilters';
+import AddSupplierModal from '../components/AddSupplierModal';
 import { useDataStore } from '../hooks/useDataStore';
+import { SupplierFormData } from '../types';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { suppliers, getGarmentsBySupplier } = useDataStore();
+  const { toast } = useToast();
+  const { suppliers, getGarmentsBySupplier, addSupplier } = useDataStore();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [supplierFilter, setSupplierFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
+  const [showAddSupplierModal, setShowAddSupplierModal] = useState(false);
 
   // Filtrar proveedores basado en búsqueda
   const filteredSuppliers = useMemo(() => {
@@ -34,14 +40,31 @@ const Dashboard: React.FC = () => {
     navigate(`/supplier/${supplierId}`);
   };
 
+  const handleAddSupplier = (supplierData: SupplierFormData) => {
+    const newSupplier = addSupplier(supplierData);
+    toast({
+      title: "Proveedor agregado",
+      description: `${newSupplier.name} ha sido agregado exitosamente.`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h2>
-          <p className="text-gray-600">Gestiona tus proveedores y sus prendas en consignación</p>
+        <div className="mb-6 flex justify-between items-start">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h2>
+            <p className="text-gray-600">Gestiona tus proveedores y sus prendas en consignación</p>
+          </div>
+          <Button 
+            onClick={() => setShowAddSupplierModal(true)}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Agregar Proveedor
+          </Button>
         </div>
 
         <SearchAndFilters
@@ -191,6 +214,12 @@ const Dashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        <AddSupplierModal
+          open={showAddSupplierModal}
+          onOpenChange={setShowAddSupplierModal}
+          onSupplierAdd={handleAddSupplier}
+        />
       </main>
     </div>
   );

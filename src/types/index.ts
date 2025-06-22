@@ -1,4 +1,3 @@
-
 export interface Supplier {
   id: number;
   name: string;
@@ -27,4 +26,11 @@ export interface GarmentFormData {
   size: string;
   purchasePrice: number;
   salePrice: number;
+}
+
+export interface SupplierFormData {
+  name: string;
+  phone: string;
+  address: string;
+  email: string;
 }

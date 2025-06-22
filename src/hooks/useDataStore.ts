@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Supplier, Garment, GarmentFormData } from '../types';
+import { Supplier, Garment, GarmentFormData, SupplierFormData } from '../types';
 import { mockSuppliers, mockGarments } from '../data/mockData';
 
 export const useDataStore = () => {
@@ -35,9 +35,26 @@ export const useDataStore = () => {
     }
   }, []);
 
+  const saveSuppliers = (newSuppliers: Supplier[]) => {
+    setSuppliers(newSuppliers);
+    localStorage.setItem('suppliers', JSON.stringify(newSuppliers));
+  };
+
   const saveGarments = (newGarments: Garment[]) => {
     setGarments(newGarments);
     localStorage.setItem('garments', JSON.stringify(newGarments));
+  };
+
+  const addSupplier = (supplierData: SupplierFormData) => {
+    const newSupplier: Supplier = {
+      id: Date.now(),
+      ...supplierData,
+    };
+
+    const updatedSuppliers = [...suppliers, newSupplier];
+    saveSuppliers(updatedSuppliers);
+    console.log('New supplier added:', newSupplier);
+    return newSupplier;
   };
 
   const addGarment = (supplierId: number, garmentData: GarmentFormData) => {
@@ -96,6 +113,7 @@ export const useDataStore = () => {
   return {
     suppliers,
     garments,
+    addSupplier,
     addGarment,
     markAsSold,
     markAsPaid,

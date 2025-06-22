@@ -4,31 +4,24 @@ import { Supplier, Garment } from '../types';
 export const mockSuppliers: Supplier[] = [
   {
     id: 1,
-    name: 'María González',
-    phone: '+54 11 1234-5678',
-    address: 'Av. Corrientes 1234, CABA',
-    email: 'maria.gonzalez@email.com'
+    name: "María García",
+    phone: "+34 666 123 456",
+    address: "Calle Mayor 123, Madrid",
+    email: "maria.garcia@email.com"
   },
   {
     id: 2,
-    name: 'Juan Pérez',
-    phone: '+54 11 2345-6789',
-    address: 'Av. Santa Fe 5678, CABA',
-    email: 'juan.perez@email.com'
+    name: "Carmen López",
+    phone: "+34 677 234 567",
+    address: "Avenida Central 456, Barcelona",
+    email: "carmen.lopez@email.com"
   },
   {
     id: 3,
-    name: 'Ana Rodríguez',
-    phone: '+54 11 3456-7890',
-    address: 'Av. Belgrano 9012, CABA',
-    email: 'ana.rodriguez@email.com'
-  },
-  {
-    id: 4,
-    name: 'Carlos López',
-    phone: '+54 11 4567-8901',
-    address: 'Av. Rivadavia 3456, CABA',
-    email: 'carlos.lopez@email.com'
+    name: "Ana Martínez",
+    phone: "+34 688 345 678",
+    address: "Plaza España 789, Valencia",
+    email: "ana.martinez@email.com"
   }
 ];
 
@@ -36,67 +29,75 @@ export const mockGarments: Garment[] = [
   {
     id: 1,
     supplierId: 1,
-    code: 'REM001',
-    name: 'Remera básica blanca',
-    size: 'M',
-    purchasePrice: 1500,
-    salePrice: 3000,
+    code: "BL001",
+    name: "Blusa Floral",
+    size: "M",
+    purchasePrice: 15,
+    salePrice: 35,
     isSold: false,
-    createdAt: '2024-01-15'
+    paymentStatus: 'not_available',
+    createdAt: "2024-01-15T10:30:00Z"
   },
   {
     id: 2,
     supplierId: 1,
-    code: 'REM002',
-    name: 'Remera negra estampada',
-    size: 'L',
-    purchasePrice: 2000,
-    salePrice: 4000,
+    code: "VE002",
+    name: "Vestido Negro",
+    size: "S",
+    purchasePrice: 25,
+    salePrice: 55,
     isSold: true,
-    createdAt: '2024-01-16'
+    paymentStatus: 'pending',
+    createdAt: "2024-01-16T14:20:00Z",
+    soldAt: "2024-01-20T16:45:00Z"
   },
   {
     id: 3,
-    supplierId: 1,
-    code: 'PAN001',
-    name: 'Pantalón jean azul',
-    size: '32',
-    purchasePrice: 4000,
-    salePrice: 8000,
+    supplierId: 2,
+    code: "PA003",
+    name: "Pantalón Vaquero",
+    size: "L",
+    purchasePrice: 20,
+    salePrice: 45,
     isSold: false,
-    createdAt: '2024-01-17'
+    paymentStatus: 'not_available',
+    createdAt: "2024-01-17T09:15:00Z"
   },
   {
     id: 4,
     supplierId: 2,
-    code: 'VES001',
-    name: 'Vestido floreado',
-    size: 'S',
-    purchasePrice: 3500,
-    salePrice: 7000,
+    code: "CA004",
+    name: "Camisa Blanca",
+    size: "M",
+    purchasePrice: 12,
+    salePrice: 28,
     isSold: false,
-    createdAt: '2024-01-18'
+    paymentStatus: 'not_available',
+    createdAt: "2024-01-18T11:00:00Z"
   },
   {
     id: 5,
-    supplierId: 2,
-    code: 'CAM001',
-    name: 'Camisa blanca formal',
-    size: 'M',
-    purchasePrice: 2500,
-    salePrice: 5000,
+    supplierId: 3,
+    code: "FA005",
+    name: "Falda Larga",
+    size: "S",
+    purchasePrice: 18,
+    salePrice: 40,
     isSold: false,
-    createdAt: '2024-01-19'
+    paymentStatus: 'not_available',
+    createdAt: "2024-01-19T13:30:00Z"
   },
   {
     id: 6,
     supplierId: 3,
-    code: 'BUZ001',
-    name: 'Buzo con capucha',
-    size: 'L',
-    purchasePrice: 3000,
-    salePrice: 6000,
+    code: "CH006",
+    name: "Chaqueta Cuero",
+    size: "L",
+    purchasePrice: 45,
+    salePrice: 85,
     isSold: true,
-    createdAt: '2024-01-20'
+    paymentStatus: 'paid',
+    createdAt: "2024-01-20T08:45:00Z",
+    soldAt: "2024-01-22T12:30:00Z"
   }
 ];
