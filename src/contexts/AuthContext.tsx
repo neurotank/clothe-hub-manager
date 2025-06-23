@@ -1,67 +1,95 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-interface User {
-  id: number;
-  username: string;
-  name: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  login: (username: string, password: string) => boolean;
-  logout: () => void;
-  isAuthenticated: boolean;
-}
+import { supabase } from '@/integrations/supabase/client';
+import { Session } from '@supabase/supabase-js';
+import { User, AuthContextType } from '../types/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Usuarios predefinidos
-const USERS: Array<User & { password: string }> = [
-  { id: 1, username: 'admin', password: 'admin123', name: 'Administrador' },
-  { id: 2, username: 'vendedor1', password: 'venta123', name: 'Vendedor 1' },
-  { id: 3, username: 'vendedor2', password: 'venta456', name: 'Vendedor 2' }
-];
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
-    // Verificar si hay un usuario guardado en localStorage
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
+    // Configurar listener para cambios de autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        setSession(session);
+        
+        if (session?.user) {
+          // Obtener datos del usuario desde la tabla users
+          const { data: userData, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('auth_user_id', session.user.id)
+            .single();
+
+          if (userData && !error) {
+            setUser(userData);
+            console.log('User data loaded:', userData);
+          } else {
+            console.error('Error loading user data:', error);
+            setUser(null);
+          }
+        } else {
+          setUser(null);
+        }
+      }
+    );
+
+    // Verificar sesión existente
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setSession(session);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = (username: string, password: string): boolean => {
-    console.log('Attempting login for:', username);
-    const foundUser = USERS.find(u => u.username === username && u.password === password);
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     
-    if (foundUser) {
-      const userSession = { id: foundUser.id, username: foundUser.username, name: foundUser.name };
-      setUser(userSession);
-      localStorage.setItem('currentUser', JSON.stringify(userSession));
-      console.log('Login successful for:', foundUser.name);
-      return true;
-    }
-    
-    console.log('Login failed for:', username);
-    return false;
+    return { error };
   };
 
-  const logout = () => {
-    console.log('User logged out');
-    setUser(null);
-    localStorage.removeItem('currentUser');
+  const loginWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`
+      }
+    });
+    
+    return { error };
   };
+
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error during logout:', error);
+    }
+    setUser(null);
+    setSession(null);
+  };
+
+  const isAdmin = user?.role === 'admin';
+  const isSupplier = user?.role === 'supplier';
 
   return (
     <AuthContext.Provider value={{
       user,
+      session,
       login,
+      loginWithGoogle,
       logout,
-      isAuthenticated: !!user
+      isAuthenticated: !!session && !!user,
+      isAdmin,
+      isSupplier
     }}>
       {children}
     </AuthContext.Provider>

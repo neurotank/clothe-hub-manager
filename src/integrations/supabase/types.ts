@@ -9,16 +9,151 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      garments: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          is_sold: boolean | null
+          name: string
+          payment_status: Database["public"]["Enums"]["payment_status"] | null
+          purchase_price: number
+          sale_price: number
+          size: string
+          sold_at: string | null
+          supplier_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          is_sold?: boolean | null
+          name: string
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          purchase_price: number
+          sale_price: number
+          size: string
+          sold_at?: string | null
+          supplier_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          is_sold?: boolean | null
+          name?: string
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          purchase_price?: number
+          sale_price?: number
+          size?: string
+          sold_at?: string | null
+          supplier_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garments_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          phone: string
+          user_id: string | null
+        }
+        Insert: {
+          address: string
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          phone: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          phone?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          auth_user_id: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          auth_user_id?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          auth_user_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_id: {
+        Args: { user_auth_id: string }
+        Returns: string
+      }
+      get_user_role: {
+        Args: { user_auth_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "supplier"
+      payment_status: "not_available" | "pending" | "paid"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +268,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "supplier"],
+      payment_status: ["not_available", "pending", "paid"],
+    },
   },
 } as const

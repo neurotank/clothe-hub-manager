@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import SupplierDetail from "./pages/SupplierDetail";
 import AdminSoldGarments from "./pages/AdminSoldGarments";
+import MyGarments from "./pages/MyGarments";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,21 +25,26 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={
-              <ProtectedRoute>
+              <ProtectedRoute adminOnly>
                 <Dashboard />
               </ProtectedRoute>
             } />
             <Route path="/supplier/:id" element={
-              <ProtectedRoute>
+              <ProtectedRoute adminOnly>
                 <SupplierDetail />
               </ProtectedRoute>
             } />
             <Route path="/admin/sold-garments" element={
-              <ProtectedRoute>
+              <ProtectedRoute adminOnly>
                 <AdminSoldGarments />
               </ProtectedRoute>
             } />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/my-garments" element={
+              <ProtectedRoute>
+                <MyGarments />
+              </ProtectedRoute>
+            } />
+            <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -1,31 +1,35 @@
+
 export interface Supplier {
-  id: number;
+  id: string;
   name: string;
   phone: string;
   address: string;
   email: string;
+  user_id?: string;
+  created_at?: string;
 }
 
 export interface Garment {
-  id: number;
-  supplierId: number;
+  id: string;
+  supplier_id?: string;
+  user_id?: string;
   code: string;
   name: string;
   size: string;
-  purchasePrice: number;
-  salePrice: number;
-  isSold: boolean;
-  paymentStatus: 'not_available' | 'pending' | 'paid';
-  createdAt: string;
-  soldAt?: string;
+  purchase_price: number;
+  sale_price: number;
+  is_sold: boolean;
+  payment_status: 'not_available' | 'pending' | 'paid';
+  created_at: string;
+  sold_at?: string;
 }
 
 export interface GarmentFormData {
   code: string;
   name: string;
   size: string;
-  purchasePrice: number;
-  salePrice: number;
+  purchase_price: number;
+  sale_price: number;
 }
 
 export interface SupplierFormData {
