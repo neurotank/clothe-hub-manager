@@ -16,8 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { GarmentFormData } from '../types';
 
 interface AddGarmentModalProps {
-  supplierId: number;
-  onAddGarment: (supplierId: number, garmentData: GarmentFormData) => void;
+  supplierId: string;
+  onAddGarment: (supplierId: string, garmentData: GarmentFormData) => void;
 }
 
 const AddGarmentModal: React.FC<AddGarmentModalProps> = ({ supplierId, onAddGarment }) => {
@@ -26,8 +26,8 @@ const AddGarmentModal: React.FC<AddGarmentModalProps> = ({ supplierId, onAddGarm
     code: '',
     name: '',
     size: '',
-    purchasePrice: 0,
-    salePrice: 0,
+    purchase_price: 0,
+    sale_price: 0,
   });
   
   const { toast } = useToast();
@@ -35,7 +35,7 @@ const AddGarmentModal: React.FC<AddGarmentModalProps> = ({ supplierId, onAddGarm
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.code || !formData.name || !formData.size || formData.purchasePrice <= 0 || formData.salePrice <= 0) {
+    if (!formData.code || !formData.name || !formData.size || formData.purchase_price <= 0 || formData.sale_price <= 0) {
       toast({
         title: "Error",
         description: "Por favor complete todos los campos correctamente",
@@ -44,7 +44,7 @@ const AddGarmentModal: React.FC<AddGarmentModalProps> = ({ supplierId, onAddGarm
       return;
     }
 
-    if (formData.salePrice <= formData.purchasePrice) {
+    if (formData.sale_price <= formData.purchase_price) {
       toast({
         title: "Error",
         description: "El precio de venta debe ser mayor al precio de compra",
@@ -65,8 +65,8 @@ const AddGarmentModal: React.FC<AddGarmentModalProps> = ({ supplierId, onAddGarm
       code: '',
       name: '',
       size: '',
-      purchasePrice: 0,
-      salePrice: 0,
+      purchase_price: 0,
+      sale_price: 0,
     });
     setOpen(false);
   };
@@ -132,28 +132,28 @@ const AddGarmentModal: React.FC<AddGarmentModalProps> = ({ supplierId, onAddGarm
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="purchasePrice">Precio de Compra ($)</Label>
+              <Label htmlFor="purchase_price">Precio de Compra ($)</Label>
               <Input
-                id="purchasePrice"
+                id="purchase_price"
                 type="number"
                 min="0"
                 step="0.01"
-                value={formData.purchasePrice || ''}
-                onChange={(e) => handleInputChange('purchasePrice', parseFloat(e.target.value) || 0)}
+                value={formData.purchase_price || ''}
+                onChange={(e) => handleInputChange('purchase_price', parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
                 required
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="salePrice">Precio de Venta ($)</Label>
+              <Label htmlFor="sale_price">Precio de Venta ($)</Label>
               <Input
-                id="salePrice"
+                id="sale_price"
                 type="number"
                 min="0"
                 step="0.01"
-                value={formData.salePrice || ''}
-                onChange={(e) => handleInputChange('salePrice', parseFloat(e.target.value) || 0)}
+                value={formData.sale_price || ''}
+                onChange={(e) => handleInputChange('sale_price', parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
                 required
               />

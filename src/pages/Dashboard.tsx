@@ -36,7 +36,7 @@ const Dashboard: React.FC = () => {
     );
   }, [suppliers, supplierFilter]);
 
-  const handleViewDetail = (supplierId: number) => {
+  const handleViewDetail = (supplierId: string) => {
     navigate(`/supplier/${supplierId}`);
   };
 
@@ -95,7 +95,7 @@ const Dashboard: React.FC = () => {
               <div className="text-2xl font-bold text-green-600">
                 {suppliers.reduce((acc, supplier) => {
                   const garments = getGarmentsBySupplier(supplier.id);
-                  return acc + garments.filter(g => !g.isSold).length;
+                  return acc + garments.filter(g => !g.is_sold).length;
                 }, 0)}
               </div>
             </CardContent>
@@ -109,7 +109,7 @@ const Dashboard: React.FC = () => {
               <div className="text-2xl font-bold text-blue-600">
                 {suppliers.reduce((acc, supplier) => {
                   const garments = getGarmentsBySupplier(supplier.id);
-                  return acc + garments.filter(g => g.isSold).length;
+                  return acc + garments.filter(g => g.is_sold).length;
                 }, 0)}
               </div>
             </CardContent>
@@ -123,7 +123,7 @@ const Dashboard: React.FC = () => {
               <div className="text-2xl font-bold text-yellow-600">
                 {suppliers.reduce((acc, supplier) => {
                   const garments = getGarmentsBySupplier(supplier.id);
-                  return acc + garments.filter(g => g.paymentStatus === 'pending').length;
+                  return acc + garments.filter(g => g.payment_status === 'pending').length;
                 }, 0)}
               </div>
             </CardContent>
@@ -157,9 +157,9 @@ const Dashboard: React.FC = () => {
                 <TableBody>
                   {filteredSuppliers.map((supplier) => {
                     const garments = getGarmentsBySupplier(supplier.id);
-                    const availableGarments = garments.filter(g => !g.isSold).length;
-                    const soldGarments = garments.filter(g => g.isSold).length;
-                    const pendingPayments = garments.filter(g => g.paymentStatus === 'pending').length;
+                    const availableGarments = garments.filter(g => !g.is_sold).length;
+                    const soldGarments = garments.filter(g => g.is_sold).length;
+                    const pendingPayments = garments.filter(g => g.payment_status === 'pending').length;
                     
                     return (
                       <TableRow key={supplier.id} className="hover:bg-gray-50">

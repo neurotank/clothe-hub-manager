@@ -27,7 +27,7 @@ const AdminSoldGarments: React.FC = () => {
   // Filtrar prendas vendidas
   const filteredGarments = useMemo(() => {
     return soldGarments.filter(garment => {
-      const supplier = suppliers.find(s => s.id === garment.supplierId);
+      const supplier = suppliers.find(s => s.id === garment.supplier_id);
       const supplierName = supplier?.name || '';
       
       const matchesSearch = 
@@ -39,16 +39,16 @@ const AdminSoldGarments: React.FC = () => {
         supplierName.toLowerCase().includes(supplierFilter.toLowerCase());
       
       const matchesStatus = statusFilter === 'all' || 
-        (statusFilter === 'pending_payment' && garment.paymentStatus === 'pending') ||
-        (statusFilter === 'paid' && garment.paymentStatus === 'paid');
+        (statusFilter === 'pending_payment' && garment.payment_status === 'pending') ||
+        (statusFilter === 'paid' && garment.payment_status === 'paid');
       
       return matchesSearch && matchesSupplier && matchesStatus;
     });
   }, [soldGarments, suppliers, searchTerm, supplierFilter, statusFilter]);
 
-  const totalRevenue = filteredGarments.reduce((acc, garment) => acc + garment.salePrice, 0);
-  const totalProfit = filteredGarments.reduce((acc, garment) => acc + (garment.salePrice - garment.purchasePrice), 0);
-  const pendingPayments = filteredGarments.filter(g => g.paymentStatus === 'pending').length;
+  const totalRevenue = filteredGarments.reduce((acc, garment) => acc + garment.sale_price, 0);
+  const totalProfit = filteredGarments.reduce((acc, garment) => acc + (garment.sale_price - garment.purchase_price), 0);
+  const pendingPayments = filteredGarments.filter(g => g.payment_status === 'pending').length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -137,8 +137,8 @@ const AdminSoldGarments: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredGarments.map((garment) => {
-                    const supplier = suppliers.find(s => s.id === garment.supplierId);
-                    const profit = garment.salePrice - garment.purchasePrice;
+                    const supplier = suppliers.find(s => s.id === garment.supplier_id);
+                    const profit = garment.sale_price - garment.purchase_price;
                     
                     return (
                       <TableRow key={garment.id} className="hover:bg-gray-50">
@@ -155,26 +155,26 @@ const AdminSoldGarments: React.FC = () => {
                           {supplier?.name}
                         </TableCell>
                         <TableCell>{garment.size}</TableCell>
-                        <TableCell className="hidden sm:table-cell">€{garment.purchasePrice}</TableCell>
-                        <TableCell className="font-medium">€{garment.salePrice}</TableCell>
+                        <TableCell className="hidden sm:table-cell">€{garment.purchase_price}</TableCell>
+                        <TableCell className="font-medium">€{garment.sale_price}</TableCell>
                         <TableCell className="hidden md:table-cell">
                           <span className={profit > 0 ? 'text-green-600' : 'text-red-600'}>
                             €{profit}
                           </span>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
-                          {garment.soldAt && format(new Date(garment.soldAt), 'dd/MM/yyyy', { locale: es })}
+                          {garment.sold_at && format(new Date(garment.sold_at), 'dd/MM/yyyy', { locale: es })}
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge 
-                            variant={garment.paymentStatus === 'paid' ? 'default' : 'secondary'}
+                            variant={garment.payment_status === 'paid' ? 'default' : 'secondary'}
                             className={
-                              garment.paymentStatus === 'paid' 
+                              garment.payment_status === 'paid' 
                                 ? 'bg-green-100 text-green-800' 
                                 : 'bg-yellow-100 text-yellow-800'
                             }
                           >
-                            {garment.paymentStatus === 'paid' ? 'Pagado' : 'Pendiente'}
+                            {garment.payment_status === 'paid' ? 'Pagado' : 'Pendiente'}
                           </Badge>
                         </TableCell>
                       </TableRow>

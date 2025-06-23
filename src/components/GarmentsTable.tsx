@@ -15,16 +15,18 @@ import { Garment } from '../types';
 
 interface GarmentsTableProps {
   garments: Garment[];
-  onMarkAsSold: (garmentId: number, garmentName: string) => void;
-  onMarkAsPaid: (garmentId: number, garmentName: string) => void;
-  onDelete: (garmentId: number, garmentName: string) => void;
+  onMarkAsSold?: (garmentId: string, garmentName: string) => void;
+  onMarkAsPaid?: (garmentId: string, garmentName: string) => void;
+  onDelete: (garmentId: string, garmentName: string) => void;
+  hideActions?: Array<'markAsSold' | 'markAsPaid'>;
 }
 
 const GarmentsTable: React.FC<GarmentsTableProps> = ({
   garments,
   onMarkAsSold,
   onMarkAsPaid,
-  onDelete
+  onDelete,
+  hideActions = []
 }) => {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-AR', {
@@ -81,7 +83,7 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
           {garments.map((garment) => (
             <TableRow 
               key={garment.id} 
-              className={`hover:bg-gray-50 ${garment.isSold ? 'opacity-60' : ''}`}
+              className={`hover:bg-gray-50 ${garment.is_sold ? 'opacity-60' : ''}`}
             >
               <TableCell className="font-medium">
                 <div>
@@ -98,14 +100,14 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
                     <div className="flex flex-col space-y-1">
                       <div className="flex justify-between">
                         <span className="text-blue-600 font-medium">Compra:</span>
-                        <span className="font-semibold">{formatPrice(garment.purchasePrice)}</span>
+                        <span className="font-semibold">{formatPrice(garment.purchase_price)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-green-600 font-medium">Venta:</span>
-                        <span className="font-semibold">{formatPrice(garment.salePrice)}</span>
+                        <span className="font-semibold">{formatPrice(garment.sale_price)}</span>
                       </div>
                       <div className="text-gray-400 text-xs">
-                        Creado: {formatDate(garment.createdAt)}
+                        Creado: {formatDate(garment.created_at)}
                       </div>
                     </div>
                   </div>
@@ -113,31 +115,31 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
               </TableCell>
               <TableCell className="hidden sm:table-cell">{garment.size}</TableCell>
               <TableCell className="hidden lg:table-cell">
-                {formatPrice(garment.purchasePrice)}
+                {formatPrice(garment.purchase_price)}
               </TableCell>
               <TableCell className="hidden lg:table-cell">
-                {formatPrice(garment.salePrice)}
+                {formatPrice(garment.sale_price)}
               </TableCell>
               <TableCell className="hidden md:table-cell">
-                {formatDate(garment.createdAt)}
+                {formatDate(garment.created_at)}
               </TableCell>
               <TableCell className="hidden md:table-cell">
-                {garment.soldAt ? formatDate(garment.soldAt) : '-'}
+                {garment.sold_at ? formatDate(garment.sold_at) : '-'}
               </TableCell>
               <TableCell className="text-center">
                 <Badge 
-                  variant={garment.isSold ? "secondary" : "default"}
-                  className={garment.isSold ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-800'}
+                  variant={garment.is_sold ? "secondary" : "default"}
+                  className={garment.is_sold ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-800'}
                 >
-                  {garment.isSold ? 'Vendida' : 'Disponible'}
+                  {garment.is_sold ? 'Vendida' : 'Disponible'}
                 </Badge>
               </TableCell>
               <TableCell className="text-center">
-                {getPaymentBadge(garment.paymentStatus)}
+                {getPaymentBadge(garment.payment_status)}
               </TableCell>
               <TableCell className="text-center">
                 <div className="flex flex-col sm:flex-row justify-center space-y-1 sm:space-y-0 sm:space-x-2">
-                  {!garment.isSold && (
+                  {!garment.is_sold && !hideActions.includes('markAsSold') && onMarkAsSold && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -148,7 +150,7 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
                       <span className="ml-1 hidden sm:inline">Vender</span>
                     </Button>
                   )}
-                  {garment.isSold && garment.paymentStatus === 'pending' && (
+                  {garment.is_sold && garment.payment_status === 'pending' && !hideActions.includes('markAsPaid') && onMarkAsPaid && (
                     <Button
                       size="sm"
                       variant="outline"

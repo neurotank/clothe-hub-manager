@@ -21,11 +21,11 @@ export const useDataStore = () => {
 
     if (savedGarments) {
       const parsedGarments = JSON.parse(savedGarments);
-      // Migrar datos existentes para incluir paymentStatus y soldAt
+      // Migrar datos existentes para incluir payment_status y sold_at
       const migratedGarments = parsedGarments.map((garment: any) => ({
         ...garment,
-        paymentStatus: garment.paymentStatus || (garment.isSold ? 'pending' : 'not_available'),
-        soldAt: garment.soldAt || (garment.isSold ? new Date().toISOString() : undefined)
+        payment_status: garment.payment_status || (garment.is_sold ? 'pending' : 'not_available'),
+        sold_at: garment.sold_at || (garment.is_sold ? new Date().toISOString() : undefined)
       }));
       setGarments(migratedGarments);
       localStorage.setItem('garments', JSON.stringify(migratedGarments));
@@ -47,7 +47,7 @@ export const useDataStore = () => {
 
   const addSupplier = (supplierData: SupplierFormData) => {
     const newSupplier: Supplier = {
-      id: Date.now(),
+      id: Date.now().toString(),
       ...supplierData,
     };
 
@@ -57,14 +57,14 @@ export const useDataStore = () => {
     return newSupplier;
   };
 
-  const addGarment = (supplierId: number, garmentData: GarmentFormData) => {
+  const addGarment = (supplierId: string, garmentData: GarmentFormData) => {
     const newGarment: Garment = {
-      id: Date.now(),
-      supplierId,
+      id: Date.now().toString(),
+      supplier_id: supplierId,
       ...garmentData,
-      isSold: false,
-      paymentStatus: 'not_available',
-      createdAt: new Date().toISOString(),
+      is_sold: false,
+      payment_status: 'not_available',
+      created_at: new Date().toISOString(),
     };
 
     const updatedGarments = [...garments, newGarment];
@@ -72,42 +72,42 @@ export const useDataStore = () => {
     console.log('New garment added:', newGarment);
   };
 
-  const markAsSold = (garmentId: number) => {
+  const markAsSold = (garmentId: string) => {
     const updatedGarments = garments.map(garment =>
       garment.id === garmentId ? { 
         ...garment, 
-        isSold: true, 
-        paymentStatus: 'pending' as const,
-        soldAt: new Date().toISOString()
+        is_sold: true, 
+        payment_status: 'pending' as const,
+        sold_at: new Date().toISOString()
       } : garment
     );
     saveGarments(updatedGarments);
     console.log('Garment marked as sold:', garmentId);
   };
 
-  const markAsPaid = (garmentId: number) => {
+  const markAsPaid = (garmentId: string) => {
     const updatedGarments = garments.map(garment =>
       garment.id === garmentId ? { 
         ...garment, 
-        paymentStatus: 'paid' as const
+        payment_status: 'paid' as const
       } : garment
     );
     saveGarments(updatedGarments);
     console.log('Garment marked as paid:', garmentId);
   };
 
-  const deleteGarment = (garmentId: number) => {
+  const deleteGarment = (garmentId: string) => {
     const updatedGarments = garments.filter(garment => garment.id !== garmentId);
     saveGarments(updatedGarments);
     console.log('Garment deleted:', garmentId);
   };
 
-  const getGarmentsBySupplier = (supplierId: number) => {
-    return garments.filter(garment => garment.supplierId === supplierId);
+  const getGarmentsBySupplier = (supplierId: string) => {
+    return garments.filter(garment => garment.supplier_id === supplierId);
   };
 
   const getAllSoldGarments = () => {
-    return garments.filter(garment => garment.isSold);
+    return garments.filter(garment => garment.is_sold);
   };
 
   return {

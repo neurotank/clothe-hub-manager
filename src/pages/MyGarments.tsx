@@ -23,7 +23,7 @@ const MyGarments: React.FC = () => {
   
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
-    garmentId: number | null;
+    garmentId: string | null;
     garmentName: string;
   }>({ open: false, garmentId: null, garmentName: '' });
 
@@ -54,7 +54,7 @@ const MyGarments: React.FC = () => {
     loadGarments();
   }, [user]);
 
-  const addGarment = async (garmentData: any) => {
+  const addGarment = async (supplierId: string, garmentData: any) => {
     if (!user) return;
 
     const { data, error } = await supabase
@@ -85,7 +85,7 @@ const MyGarments: React.FC = () => {
     }
   };
 
-  const handleDeleteClick = (garmentId: number, garmentName: string) => {
+  const handleDeleteClick = (garmentId: string, garmentName: string) => {
     setDeleteDialog({
       open: true,
       garmentId,
@@ -168,7 +168,7 @@ const MyGarments: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-2 sm:mb-0">Inventario</h2>
-          <AddGarmentModal supplierId={0} onAddGarment={addGarment} />
+          <AddGarmentModal supplierId="" onAddGarment={addGarment} />
         </div>
 
         <SearchAndFilters
@@ -195,7 +195,7 @@ const MyGarments: React.FC = () => {
                 <p className="text-gray-500 mb-4">
                   No tienes prendas registradas
                 </p>
-                <AddGarmentModal supplierId={0} onAddGarment={addGarment} />
+                <AddGarmentModal supplierId="" onAddGarment={addGarment} />
               </div>
             ) : (
               <GarmentsTable 
