@@ -23,6 +23,18 @@ const MonthFilter: React.FC<MonthFilterProps> = ({ selectedMonth, onMonthChange 
     { value: '2024-10', label: 'Octubre 2024' },
     { value: '2024-11', label: 'Noviembre 2024' },
     { value: '2024-12', label: 'Diciembre 2024' },
+    { value: '2025-01', label: 'Enero 2025' },
+    { value: '2025-02', label: 'Febrero 2025' },
+    { value: '2025-03', label: 'Marzo 2025' },
+    { value: '2025-04', label: 'Abril 2025' },
+    { value: '2025-05', label: 'Mayo 2025' },
+    { value: '2025-06', label: 'Junio 2025' },
+    { value: '2025-07', label: 'Julio 2025' },
+    { value: '2025-08', label: 'Agosto 2025' },
+    { value: '2025-09', label: 'Septiembre 2025' },
+    { value: '2025-10', label: 'Octubre 2025' },
+    { value: '2025-11', label: 'Noviembre 2025' },
+    { value: '2025-12', label: 'Diciembre 2025' },
   ];
 
   return (

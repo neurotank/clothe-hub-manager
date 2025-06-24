@@ -15,9 +15,7 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<{ error: Error | null }>;
   loginWithGoogle: () => Promise<{ error: Error | null }>;
   logout: () => Promise<void>;
-  switchUser?: (userId: string) => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
   isSupplier: boolean;
-  availableUsers?: User[];
 }

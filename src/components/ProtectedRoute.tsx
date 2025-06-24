@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, adminOnly = false }) => {
-  const { isAuthenticated, isAdmin, user } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -16,12 +16,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, adminOnly = f
 
   // Si es solo para admin y el usuario no es admin
   if (adminOnly && !isAdmin) {
-    return <Navigate to="/my-garments" replace />;
-  }
-
-  // Si es supplier y está intentando acceder a rutas de admin
-  if (user?.role === 'supplier' && window.location.pathname.startsWith('/dashboard')) {
-    return <Navigate to="/my-garments" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

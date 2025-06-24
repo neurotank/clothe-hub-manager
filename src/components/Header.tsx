@@ -1,30 +1,17 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { ChevronDown, Users } from 'lucide-react';
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout, user, isAdmin, switchUser, availableUsers } = useAuth();
+  const { logout, user, isAdmin } = useAuth();
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
-  };
-
-  const handleUserSwitch = (userId: string) => {
-    if (switchUser) {
-      switchUser(userId);
-    }
   };
 
   const isActiveRoute = (path: string) => {
@@ -43,16 +30,18 @@ const Header: React.FC = () => {
               ConsignApp
             </h1>
             
-            {/* Navegación solo para admins */}
-            {isAdmin && (
-              <nav className="hidden md:flex space-x-4">
-                <Button
-                  variant={isActiveRoute('/dashboard') ? 'default' : 'ghost'}
-                  onClick={() => navigate('/dashboard')}
-                  className={isActiveRoute('/dashboard') ? 'bg-blue-600 hover:bg-blue-700' : ''}
-                >
-                  Dashboard
-                </Button>
+            {/* Navegación para todos los usuarios autenticados */}
+            <nav className="hidden md:flex space-x-4">
+              <Button
+                variant={isActiveRoute('/dashboard') ? 'default' : 'ghost'}
+                onClick={() => navigate('/dashboard')}
+                className={isActiveRoute('/dashboard') ? 'bg-blue-600 hover:bg-blue-700' : ''}
+              >
+                Dashboard
+              </Button>
+              
+              {/* Solo admin puede ver administración */}
+              {isAdmin && (
                 <Button
                   variant={isActiveRoute('/admin/sold-garments') ? 'default' : 'ghost'}
                   onClick={() => navigate('/admin/sold-garments')}
@@ -60,35 +49,25 @@ const Header: React.FC = () => {
                 >
                   Administración
                 </Button>
-              </nav>
-            )}
+              )}
+              
+              {/* Mis Prendas para suppliers */}
+              {!isAdmin && (
+                <Button
+                  variant={isActiveRoute('/my-garments') ? 'default' : 'ghost'}
+                  onClick={() => navigate('/my-garments')}
+                  className={isActiveRoute('/my-garments') ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                >
+                  Mis Prendas
+                </Button>
+              )}
+            </nav>
           </div>
           
           <div className="flex items-center space-x-4">
-            {/* Selector de usuario para desarrollo */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center space-x-2">
-                  <Users className="w-4 h-4" />
-                  <span className="text-sm">{user?.name} ({user?.role})</span>
-                  <ChevronDown className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {availableUsers?.map((availableUser) => (
-                  <DropdownMenuItem
-                    key={availableUser.id}
-                    onClick={() => handleUserSwitch(availableUser.id)}
-                    className={user?.id === availableUser.id ? 'bg-blue-50' : ''}
-                  >
-                    <div className="flex flex-col">
-                      <span className="font-medium">{availableUser.name}</span>
-                      <span className="text-xs text-gray-500">{availableUser.role}</span>
-                    </div>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <span className="text-sm text-gray-600">
+              {user?.name} ({user?.role === 'admin' ? 'Administrador' : 'Vendedor'})
+            </span>
             
             <Button 
               onClick={handleLogout}
@@ -100,18 +79,19 @@ const Header: React.FC = () => {
           </div>
         </div>
         
-        {/* Mobile navigation - solo para admins */}
-        {isAdmin && (
-          <div className="md:hidden pb-4">
-            <nav className="flex space-x-2">
-              <Button
-                variant={isActiveRoute('/dashboard') ? 'default' : 'ghost'}
-                onClick={() => navigate('/dashboard')}
-                size="sm"
-                className={isActiveRoute('/dashboard') ? 'bg-blue-600 hover:bg-blue-700' : ''}
-              >
-                Dashboard
-              </Button>
+        {/* Mobile navigation */}
+        <div className="md:hidden pb-4">
+          <nav className="flex space-x-2">
+            <Button
+              variant={isActiveRoute('/dashboard') ? 'default' : 'ghost'}
+              onClick={() => navigate('/dashboard')}
+              size="sm"
+              className={isActiveRoute('/dashboard') ? 'bg-blue-600 hover:bg-blue-700' : ''}
+            >
+              Dashboard
+            </Button>
+            
+            {isAdmin && (
               <Button
                 variant={isActiveRoute('/admin/sold-garments') ? 'default' : 'ghost'}
                 onClick={() => navigate('/admin/sold-garments')}
@@ -120,9 +100,20 @@ const Header: React.FC = () => {
               >
                 Admin
               </Button>
-            </nav>
-          </div>
-        )}
+            )}
+            
+            {!isAdmin && (
+              <Button
+                variant={isActiveRoute('/my-garments') ? 'default' : 'ghost'}
+                onClick={() => navigate('/my-garments')}
+                size="sm"
+                className={isActiveRoute('/my-garments') ? 'bg-blue-600 hover:bg-blue-700' : ''}
+              >
+                Mis Prendas
+              </Button>
+            )}
+          </nav>
+        </div>
       </div>
     </header>
   );
