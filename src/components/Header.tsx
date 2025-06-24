@@ -1,17 +1,30 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ChevronDown, Users } from 'lucide-react';
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout, user, isAdmin, isSupplier } = useAuth();
+  const { logout, user, isAdmin, switchUser, availableUsers } = useAuth();
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
+  };
+
+  const handleUserSwitch = (userId: string) => {
+    if (switchUser) {
+      switchUser(userId);
+    }
   };
 
   const isActiveRoute = (path: string) => {
@@ -52,9 +65,31 @@ const Header: React.FC = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">
-              {user?.name} ({user?.role})
-            </span>
+            {/* Selector de usuario para desarrollo */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center space-x-2">
+                  <Users className="w-4 h-4" />
+                  <span className="text-sm">{user?.name} ({user?.role})</span>
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {availableUsers?.map((availableUser) => (
+                  <DropdownMenuItem
+                    key={availableUser.id}
+                    onClick={() => handleUserSwitch(availableUser.id)}
+                    className={user?.id === availableUser.id ? 'bg-blue-50' : ''}
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium">{availableUser.name}</span>
+                      <span className="text-xs text-gray-500">{availableUser.role}</span>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             <Button 
               onClick={handleLogout}
               variant="outline"

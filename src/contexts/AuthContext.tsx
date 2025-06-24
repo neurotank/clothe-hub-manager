@@ -1,80 +1,84 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Session } from '@supabase/supabase-js';
 import { User, AuthContextType } from '../types/auth';
+
+// Usuarios fijos del sistema
+const FIXED_USERS: User[] = [
+  {
+    id: '550e8400-e29b-41d4-a716-446655440001',
+    email: 'admin@consignapp.com',
+    name: 'Administrador',
+    role: 'admin',
+    auth_user_id: '550e8400-e29b-41d4-a716-446655440001',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '550e8400-e29b-41d4-a716-446655440002',
+    email: 'vendedor1@consignapp.com',
+    name: 'Vendedor 1',
+    role: 'supplier',
+    auth_user_id: '550e8400-e29b-41d4-a716-446655440002',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '550e8400-e29b-41d4-a716-446655440003',
+    email: 'vendedor2@consignapp.com',
+    name: 'Vendedor 2',
+    role: 'supplier',
+    auth_user_id: '550e8400-e29b-41d4-a716-446655440003',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
-    // Configurar listener para cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        setSession(session);
-        
-        if (session?.user) {
-          // Obtener datos del usuario desde la tabla users
-          const { data: userData, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('auth_user_id', session.user.id)
-            .single();
-
-          if (userData && !error) {
-            setUser(userData);
-            console.log('User data loaded:', userData);
-          } else {
-            console.error('Error loading user data:', error);
-            setUser(null);
-          }
-        } else {
-          setUser(null);
-        }
+    // Verificar si hay un usuario guardado en localStorage
+    const savedUserId = localStorage.getItem('currentUserId');
+    if (savedUserId) {
+      const foundUser = FIXED_USERS.find(u => u.id === savedUserId);
+      if (foundUser) {
+        setUser(foundUser);
       }
-    );
-
-    // Verificar sesión existente
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setSession(session);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    } else {
+      // Por defecto, loguear como admin
+      setUser(FIXED_USERS[0]);
+      localStorage.setItem('currentUserId', FIXED_USERS[0].id);
+    }
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    return { error };
+    const foundUser = FIXED_USERS.find(u => u.email === email);
+    if (foundUser) {
+      setUser(foundUser);
+      localStorage.setItem('currentUserId', foundUser.id);
+      return { error: null };
+    }
+    return { error: new Error('Usuario no encontrado') };
   };
 
   const loginWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`
-      }
-    });
-    
-    return { error };
+    // No implementado para usuarios fijos
+    return { error: new Error('Google login no disponible') };
   };
 
   const logout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error during logout:', error);
-    }
     setUser(null);
-    setSession(null);
+    localStorage.removeItem('currentUserId');
+  };
+
+  const switchUser = (userId: string) => {
+    const foundUser = FIXED_USERS.find(u => u.id === userId);
+    if (foundUser) {
+      setUser(foundUser);
+      localStorage.setItem('currentUserId', foundUser.id);
+    }
   };
 
   const isAdmin = user?.role === 'admin';
@@ -83,13 +87,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={{
       user,
-      session,
+      session: null,
       login,
       loginWithGoogle,
       logout,
-      isAuthenticated: !!session && !!user,
+      switchUser,
+      isAuthenticated: !!user,
       isAdmin,
-      isSupplier
+      isSupplier,
+      availableUsers: FIXED_USERS
     }}>
       {children}
     </AuthContext.Provider>

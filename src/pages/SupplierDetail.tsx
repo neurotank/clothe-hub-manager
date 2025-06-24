@@ -26,19 +26,19 @@ const SupplierDetail: React.FC = () => {
   // Estados para los diálogos
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
-    garmentId: number | null;
+    garmentId: string | null;
     garmentName: string;
   }>({ open: false, garmentId: null, garmentName: '' });
 
   const [sellDialog, setSellDialog] = useState<{
     open: boolean;
-    garmentId: number | null;
+    garmentId: string | null;
     garmentName: string;
   }>({ open: false, garmentId: null, garmentName: '' });
 
   const [paymentDialog, setPaymentDialog] = useState<{
     open: boolean;
-    garmentId: number | null;
+    garmentId: string | null;
     garmentName: string;
   }>({ open: false, garmentId: null, garmentName: '' });
 
@@ -46,9 +46,8 @@ const SupplierDetail: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
 
-  const supplierId = parseInt(id || '0');
-  const supplier = suppliers.find(s => s.id === supplierId);
-  const allGarments = getGarmentsBySupplier(supplierId);
+  const supplier = suppliers.find(s => s.id === id);
+  const allGarments = id ? getGarmentsBySupplier(id) : [];
 
   // Filtrar prendas basado en búsqueda y filtros
   const filteredGarments = useMemo(() => {
@@ -59,10 +58,10 @@ const SupplierDetail: React.FC = () => {
 
       const matchesStatus = 
         statusFilter === 'all' ||
-        (statusFilter === 'available' && !garment.isSold) ||
-        (statusFilter === 'sold' && garment.isSold) ||
-        (statusFilter === 'pending_payment' && garment.paymentStatus === 'pending') ||
-        (statusFilter === 'paid' && garment.paymentStatus === 'paid');
+        (statusFilter === 'available' && !garment.is_sold) ||
+        (statusFilter === 'sold' && garment.is_sold) ||
+        (statusFilter === 'pending_payment' && garment.payment_status === 'pending') ||
+        (statusFilter === 'paid' && garment.payment_status === 'paid');
 
       return matchesSearch && matchesStatus;
     });
@@ -84,7 +83,7 @@ const SupplierDetail: React.FC = () => {
     );
   }
 
-  const handleMarkAsSoldClick = (garmentId: number, garmentName: string) => {
+  const handleMarkAsSoldClick = (garmentId: string, garmentName: string) => {
     setSellDialog({
       open: true,
       garmentId,
@@ -110,7 +109,7 @@ const SupplierDetail: React.FC = () => {
     setSellDialog({ open: false, garmentId: null, garmentName: '' });
   };
 
-  const handleMarkAsPaidClick = (garmentId: number, garmentName: string) => {
+  const handleMarkAsPaidClick = (garmentId: string, garmentName: string) => {
     setPaymentDialog({
       open: true,
       garmentId,
@@ -129,7 +128,7 @@ const SupplierDetail: React.FC = () => {
     setPaymentDialog({ open: false, garmentId: null, garmentName: '' });
   };
 
-  const handleDeleteClick = (garmentId: number, garmentName: string) => {
+  const handleDeleteClick = (garmentId: string, garmentName: string) => {
     setDeleteDialog({
       open: true,
       garmentId,
@@ -148,9 +147,9 @@ const SupplierDetail: React.FC = () => {
     setDeleteDialog({ open: false, garmentId: null, garmentName: '' });
   };
 
-  const availableGarments = allGarments.filter(g => !g.isSold);
-  const soldGarments = allGarments.filter(g => g.isSold);
-  const pendingPayment = allGarments.filter(g => g.paymentStatus === 'pending');
+  const availableGarments = allGarments.filter(g => !g.is_sold);
+  const soldGarments = allGarments.filter(g => g.is_sold);
+  const pendingPayment = allGarments.filter(g => g.payment_status === 'pending');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -186,7 +185,7 @@ const SupplierDetail: React.FC = () => {
             </div>
           </div>
           <div className="mt-4 sm:mt-0">
-            <AddGarmentModal supplierId={supplierId} onAddGarment={addGarment} />
+            {id && <AddGarmentModal supplierId={id} onAddGarment={addGarment} />}
           </div>
         </div>
 
@@ -214,7 +213,7 @@ const SupplierDetail: React.FC = () => {
                 <p className="text-gray-500 mb-4">
                   No hay prendas registradas para este proveedor
                 </p>
-                <AddGarmentModal supplierId={supplierId} onAddGarment={addGarment} />
+                {id && <AddGarmentModal supplierId={id} onAddGarment={addGarment} />}
               </div>
             ) : (
               <GarmentsTable 

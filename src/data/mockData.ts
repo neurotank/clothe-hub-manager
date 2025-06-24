@@ -3,32 +3,36 @@ import { Supplier, Garment } from '../types';
 
 export const mockSuppliers: Supplier[] = [
   {
-    id: "1",
+    id: "11111111-1111-1111-1111-111111111111",
     name: "María García",
     phone: "+34 666 123 456",
     address: "Calle Mayor 123, Madrid",
-    email: "maria.garcia@email.com"
+    email: "maria.garcia@email.com",
+    user_id: "550e8400-e29b-41d4-a716-446655440002"
   },
   {
-    id: "2",
+    id: "22222222-2222-2222-2222-222222222222",
     name: "Carmen López",
     phone: "+34 677 234 567",
     address: "Avenida Central 456, Barcelona",
-    email: "carmen.lopez@email.com"
+    email: "carmen.lopez@email.com",
+    user_id: "550e8400-e29b-41d4-a716-446655440003"
   },
   {
-    id: "3",
+    id: "33333333-3333-3333-3333-333333333333",
     name: "Ana Martínez",
     phone: "+34 688 345 678",
     address: "Plaza España 789, Valencia",
-    email: "ana.martinez@email.com"
+    email: "ana.martinez@email.com",
+    user_id: "550e8400-e29b-41d4-a716-446655440002"
   }
 ];
 
 export const mockGarments: Garment[] = [
   {
-    id: "1",
-    supplier_id: "1",
+    id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    supplier_id: "11111111-1111-1111-1111-111111111111",
+    user_id: "550e8400-e29b-41d4-a716-446655440002",
     code: "BL001",
     name: "Blusa Floral",
     size: "M",
@@ -39,8 +43,9 @@ export const mockGarments: Garment[] = [
     created_at: "2024-01-15T10:30:00Z"
   },
   {
-    id: "2",
-    supplier_id: "1",
+    id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    supplier_id: "11111111-1111-1111-1111-111111111111",
+    user_id: "550e8400-e29b-41d4-a716-446655440002",
     code: "VE002",
     name: "Vestido Negro",
     size: "S",
@@ -52,8 +57,9 @@ export const mockGarments: Garment[] = [
     sold_at: "2024-01-20T16:45:00Z"
   },
   {
-    id: "3",
-    supplier_id: "2",
+    id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+    supplier_id: "22222222-2222-2222-2222-222222222222",
+    user_id: "550e8400-e29b-41d4-a716-446655440003",
     code: "PA003",
     name: "Pantalón Vaquero",
     size: "L",
@@ -64,8 +70,9 @@ export const mockGarments: Garment[] = [
     created_at: "2024-01-17T09:15:00Z"
   },
   {
-    id: "4",
-    supplier_id: "2",
+    id: "dddddddd-dddd-dddd-dddd-dddddddddddd",
+    supplier_id: "22222222-2222-2222-2222-222222222222",
+    user_id: "550e8400-e29b-41d4-a716-446655440003",
     code: "CA004",
     name: "Camisa Blanca",
     size: "M",
@@ -76,8 +83,9 @@ export const mockGarments: Garment[] = [
     created_at: "2024-01-18T11:00:00Z"
   },
   {
-    id: "5",
-    supplier_id: "3",
+    id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+    supplier_id: "33333333-3333-3333-3333-333333333333",
+    user_id: "550e8400-e29b-41d4-a716-446655440002",
     code: "FA005",
     name: "Falda Larga",
     size: "S",
@@ -88,8 +96,9 @@ export const mockGarments: Garment[] = [
     created_at: "2024-01-19T13:30:00Z"
   },
   {
-    id: "6",
-    supplier_id: "3",
+    id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+    supplier_id: "33333333-3333-3333-3333-333333333333",
+    user_id: "550e8400-e29b-41d4-a716-446655440002",
     code: "CH006",
     name: "Chaqueta Cuero",
     size: "L",

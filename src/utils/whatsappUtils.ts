@@ -9,7 +9,7 @@ Te informamos que tu prenda se ha vendido:
 📦 Producto: ${garment.name}
 🔢 Código: ${garment.code}
 👕 Talle: ${garment.size}
-💰 Precio de venta: $${garment.salePrice.toLocaleString('es-AR')}
+💰 Precio de venta: $${garment.sale_price.toLocaleString('es-AR')}
 
 ¡Felicitaciones por la venta! 
 
