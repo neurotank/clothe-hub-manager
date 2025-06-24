@@ -73,6 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('currentUserId');
   };
 
+  // Permitir cambio libre entre cualquier usuario
   const switchUser = (userId: string) => {
     const foundUser = FIXED_USERS.find(u => u.id === userId);
     if (foundUser) {
@@ -95,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAuthenticated: !!user,
       isAdmin,
       isSupplier,
-      availableUsers: FIXED_USERS
+      availableUsers: FIXED_USERS // Todos los usuarios disponibles para todos
     }}>
       {children}
     </AuthContext.Provider>

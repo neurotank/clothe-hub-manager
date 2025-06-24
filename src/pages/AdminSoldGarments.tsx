@@ -12,6 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import Header from '../components/Header';
 import SearchAndFilters from '../components/SearchAndFilters';
+import MonthFilter from '../components/MonthFilter';
 import { useDataStore } from '../hooks/useDataStore';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -23,6 +24,7 @@ const AdminSoldGarments: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [supplierFilter, setSupplierFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
+  const [selectedMonth, setSelectedMonth] = useState('all');
 
   // Filtrar prendas vendidas
   const filteredGarments = useMemo(() => {
@@ -42,9 +44,13 @@ const AdminSoldGarments: React.FC = () => {
         (statusFilter === 'pending_payment' && garment.payment_status === 'pending') ||
         (statusFilter === 'paid' && garment.payment_status === 'paid');
       
-      return matchesSearch && matchesSupplier && matchesStatus;
+      // Filtro por mes
+      const matchesMonth = selectedMonth === 'all' || 
+        (garment.sold_at && format(new Date(garment.sold_at), 'yyyy-MM') === selectedMonth);
+      
+      return matchesSearch && matchesSupplier && matchesStatus && matchesMonth;
     });
-  }, [soldGarments, suppliers, searchTerm, supplierFilter, statusFilter]);
+  }, [soldGarments, suppliers, searchTerm, supplierFilter, statusFilter, selectedMonth]);
 
   const totalRevenue = filteredGarments.reduce((acc, garment) => acc + garment.sale_price, 0);
   const totalProfit = filteredGarments.reduce((acc, garment) => acc + (garment.sale_price - garment.purchase_price), 0);
@@ -60,20 +66,30 @@ const AdminSoldGarments: React.FC = () => {
           <p className="text-gray-600">Vista completa de todas las prendas vendidas y sus pagos</p>
         </div>
 
-        <SearchAndFilters
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          showSupplierFilter={true}
-          supplierFilter={supplierFilter}
-          onSupplierFilterChange={setSupplierFilter}
-        />
+        <div className="mb-6 space-y-4">
+          <SearchAndFilters
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            showSupplierFilter={true}
+            supplierFilter={supplierFilter}
+            onSupplierFilterChange={setSupplierFilter}
+          />
+          
+          <MonthFilter
+            selectedMonth={selectedMonth}
+            onMonthChange={setSelectedMonth}
+          />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Vendidas</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Total Vendidas
+                {selectedMonth !== 'all' && <span className="block text-xs text-gray-400">({selectedMonth})</span>}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{filteredGarments.length}</div>
@@ -82,7 +98,10 @@ const AdminSoldGarments: React.FC = () => {
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Ingresos Totales</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Ingresos Totales
+                {selectedMonth !== 'all' && <span className="block text-xs text-gray-400">({selectedMonth})</span>}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">€{totalRevenue}</div>
@@ -91,7 +110,10 @@ const AdminSoldGarments: React.FC = () => {
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Ganancia Total</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Ganancia Total
+                {selectedMonth !== 'all' && <span className="block text-xs text-gray-400">({selectedMonth})</span>}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">€{totalProfit}</div>
@@ -100,7 +122,10 @@ const AdminSoldGarments: React.FC = () => {
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Pagos Pendientes</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Pagos Pendientes
+                {selectedMonth !== 'all' && <span className="block text-xs text-gray-400">({selectedMonth})</span>}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-600">{pendingPayments}</div>
@@ -115,6 +140,11 @@ const AdminSoldGarments: React.FC = () => {
               {filteredGarments.length !== soldGarments.length && (
                 <span className="text-sm font-normal text-gray-500 ml-2">
                   ({filteredGarments.length} de {soldGarments.length})
+                </span>
+              )}
+              {selectedMonth !== 'all' && (
+                <span className="text-sm font-normal text-blue-600 ml-2">
+                  - {selectedMonth}
                 </span>
               )}
             </CardTitle>
