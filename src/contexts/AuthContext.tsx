@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, AuthContextType } from '../types/auth';
 
-// Usuarios fijos del sistema con contraseñas
+// Usuarios fijos del sistema con contraseñas - TODOS son admin o tienen acceso al dashboard
 const FIXED_USERS: (User & { password: string })[] = [
   {
     id: '550e8400-e29b-41d4-a716-446655440001',
@@ -18,7 +18,7 @@ const FIXED_USERS: (User & { password: string })[] = [
     id: '550e8400-e29b-41d4-a716-446655440002',
     email: 'vendedor1@consignapp.com',
     name: 'Vendedor 1',
-    role: 'supplier',
+    role: 'admin', // Cambiado a admin para acceso al dashboard
     password: 'vendedor123',
     auth_user_id: '550e8400-e29b-41d4-a716-446655440002',
     created_at: new Date().toISOString(),
@@ -28,7 +28,7 @@ const FIXED_USERS: (User & { password: string })[] = [
     id: '550e8400-e29b-41d4-a716-446655440003',
     email: 'vendedor2@consignapp.com',
     name: 'Vendedor 2',
-    role: 'supplier',
+    role: 'admin', // Cambiado a admin para acceso al dashboard
     password: 'vendedor456',
     auth_user_id: '550e8400-e29b-41d4-a716-446655440003',
     created_at: new Date().toISOString(),

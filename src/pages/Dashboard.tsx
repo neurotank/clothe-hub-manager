@@ -35,33 +35,43 @@ const Dashboard: React.FC = () => {
 
   // Cargar suppliers
   const loadSuppliers = async () => {
-    const { data, error } = await supabase
-      .from('suppliers')
-      .select('*')
-      .order('name', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('suppliers')
+        .select('*')
+        .order('name', { ascending: true });
 
-    if (error) {
-      console.error('Error loading suppliers:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los proveedores",
-        variant: "destructive",
-      });
-    } else {
-      setSuppliers(data || []);
+      if (error) {
+        console.error('Error loading suppliers:', error);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los proveedores",
+          variant: "destructive",
+        });
+      } else {
+        console.log('Suppliers loaded:', data);
+        setSuppliers(data || []);
+      }
+    } catch (error) {
+      console.error('Error en loadSuppliers:', error);
     }
   };
 
   // Cargar prendas
   const loadGarments = async () => {
-    const { data, error } = await supabase
-      .from('garments')
-      .select('*');
+    try {
+      const { data, error } = await supabase
+        .from('garments')
+        .select('*');
 
-    if (error) {
-      console.error('Error loading garments:', error);
-    } else {
-      setGarments(data || []);
+      if (error) {
+        console.error('Error loading garments:', error);
+      } else {
+        console.log('Garments loaded:', data);
+        setGarments(data || []);
+      }
+    } catch (error) {
+      console.error('Error en loadGarments:', error);
     }
     setLoading(false);
   };
@@ -82,30 +92,48 @@ const Dashboard: React.FC = () => {
   };
 
   const handleAddSupplier = async (supplierData: SupplierFormData) => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('suppliers')
-      .insert({
-        ...supplierData,
-        user_id: user.id,
-        created_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error adding supplier:', error);
+    if (!user) {
       toast({
         title: "Error",
-        description: "No se pudo agregar el proveedor",
+        description: "Usuario no autenticado",
         variant: "destructive",
       });
-    } else {
-      setSuppliers(prev => [...prev, data]);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('suppliers')
+        .insert({
+          ...supplierData,
+          user_id: user.id,
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding supplier:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo agregar el proveedor",
+          variant: "destructive",
+        });
+      } else {
+        console.log('Supplier added:', data);
+        setSuppliers(prev => [...prev, data]);
+        setShowAddSupplierModal(false);
+        toast({
+          title: "Proveedor agregado",
+          description: `${data.name} ${data.surname} ha sido agregado exitosamente.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error en handleAddSupplier:', error);
       toast({
-        title: "Proveedor agregado",
-        description: `${data.name} ${data.surname} ha sido agregado exitosamente.`,
+        title: "Error",
+        description: "Error inesperado al agregar el proveedor",
+        variant: "destructive",
       });
     }
   };

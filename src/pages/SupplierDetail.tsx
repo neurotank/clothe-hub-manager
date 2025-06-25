@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,16 +12,19 @@ import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
 import SellConfirmDialog from '../components/SellConfirmDialog';
 import PaymentConfirmDialog from '../components/PaymentConfirmDialog';
 import SearchAndFilters from '../components/SearchAndFilters';
-import { useDataStore } from '../hooks/useDataStore';
 import { useToast } from '@/hooks/use-toast';
 import { sendWhatsAppMessage } from '../utils/whatsappUtils';
+import { supabase } from '@/integrations/supabase/client';
+import { Supplier, Garment, GarmentFormData } from '../types';
 
 const SupplierDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const { suppliers, addGarment, markAsSold, markAsPaid, deleteGarment, getGarmentsBySupplier } = useDataStore();
+  const [supplier, setSupplier] = useState<Supplier | null>(null);
+  const [garments, setGarments] = useState<Garment[]>([]);
+  const [loading, setLoading] = useState(true);
   
   // Estados para los diálogos
   const [deleteDialog, setDeleteDialog] = useState<{
@@ -46,12 +49,53 @@ const SupplierDetail: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
 
-  const supplier = suppliers.find(s => s.id === id);
-  const allGarments = id ? getGarmentsBySupplier(id) : [];
+  // Cargar datos del supplier y sus prendas
+  useEffect(() => {
+    if (!id) return;
+
+    const loadData = async () => {
+      try {
+        // Cargar supplier
+        const { data: supplierData, error: supplierError } = await supabase
+          .from('suppliers')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (supplierError) {
+          console.error('Error loading supplier:', supplierError);
+          toast({
+            title: "Error",
+            description: "No se pudo cargar el proveedor",
+            variant: "destructive",
+          });
+        } else {
+          setSupplier(supplierData);
+        }
+
+        // Cargar prendas del supplier
+        const { data: garmentsData, error: garmentsError } = await supabase
+          .from('garments')
+          .select('*')
+          .eq('supplier_id', id);
+
+        if (garmentsError) {
+          console.error('Error loading garments:', garmentsError);
+        } else {
+          setGarments(garmentsData || []);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+      setLoading(false);
+    };
+
+    loadData();
+  }, [id, toast]);
 
   // Filtrar prendas basado en búsqueda y filtros
   const filteredGarments = useMemo(() => {
-    return allGarments.filter(garment => {
+    return garments.filter(garment => {
       const matchesSearch = 
         garment.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
         garment.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -65,7 +109,125 @@ const SupplierDetail: React.FC = () => {
 
       return matchesSearch && matchesStatus;
     });
-  }, [allGarments, searchTerm, statusFilter]);
+  }, [garments, searchTerm, statusFilter]);
+
+  const addGarment = async (supplierId: string, garmentData: GarmentFormData) => {
+    try {
+      const { data, error } = await supabase
+        .from('garments')
+        .insert({
+          supplier_id: supplierId,
+          ...garmentData,
+          is_sold: false,
+          payment_status: 'not_available',
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding garment:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo agregar la prenda",
+          variant: "destructive",
+        });
+      } else {
+        setGarments(prev => [...prev, data]);
+        toast({
+          title: "Prenda agregada",
+          description: `${data.name} agregada exitosamente`,
+        });
+      }
+    } catch (error) {
+      console.error('Error in addGarment:', error);
+    }
+  };
+
+  const markAsSold = async (garmentId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('garments')
+        .update({
+          is_sold: true,
+          payment_status: 'pending',
+          sold_at: new Date().toISOString()
+        })
+        .eq('id', garmentId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error marking as sold:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo marcar como vendida",
+          variant: "destructive",
+        });
+      } else {
+        setGarments(prev => prev.map(g => g.id === garmentId ? data : g));
+      }
+    } catch (error) {
+      console.error('Error in markAsSold:', error);
+    }
+  };
+
+  const markAsPaid = async (garmentId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('garments')
+        .update({ payment_status: 'paid' })
+        .eq('id', garmentId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error marking as paid:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo marcar como pagada",
+          variant: "destructive",
+        });
+      } else {
+        setGarments(prev => prev.map(g => g.id === garmentId ? data : g));
+      }
+    } catch (error) {
+      console.error('Error in markAsPaid:', error);
+    }
+  };
+
+  const deleteGarment = async (garmentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('garments')
+        .delete()
+        .eq('id', garmentId);
+
+      if (error) {
+        console.error('Error deleting garment:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo eliminar la prenda",
+          variant: "destructive",
+        });
+      } else {
+        setGarments(prev => prev.filter(g => g.id !== garmentId));
+      }
+    } catch (error) {
+      console.error('Error in deleteGarment:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6">
+          <div className="text-center">Cargando...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!supplier) {
     return (
@@ -91,11 +253,11 @@ const SupplierDetail: React.FC = () => {
     });
   };
 
-  const handleSellConfirm = () => {
+  const handleSellConfirm = async () => {
     if (sellDialog.garmentId && supplier) {
-      const garment = allGarments.find(g => g.id === sellDialog.garmentId);
+      const garment = garments.find(g => g.id === sellDialog.garmentId);
       if (garment) {
-        markAsSold(sellDialog.garmentId);
+        await markAsSold(sellDialog.garmentId);
         
         // Enviar mensaje de WhatsApp
         sendWhatsAppMessage(supplier, garment);
@@ -117,9 +279,9 @@ const SupplierDetail: React.FC = () => {
     });
   };
 
-  const handlePaymentConfirm = () => {
+  const handlePaymentConfirm = async () => {
     if (paymentDialog.garmentId) {
-      markAsPaid(paymentDialog.garmentId);
+      await markAsPaid(paymentDialog.garmentId);
       toast({
         title: "Pago confirmado",
         description: `${paymentDialog.garmentName} marcada como pagada`,
@@ -136,9 +298,9 @@ const SupplierDetail: React.FC = () => {
     });
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (deleteDialog.garmentId) {
-      deleteGarment(deleteDialog.garmentId);
+      await deleteGarment(deleteDialog.garmentId);
       toast({
         title: "Prenda eliminada",
         description: `${deleteDialog.garmentName} eliminada del inventario`,
@@ -147,9 +309,9 @@ const SupplierDetail: React.FC = () => {
     setDeleteDialog({ open: false, garmentId: null, garmentName: '' });
   };
 
-  const availableGarments = allGarments.filter(g => !g.is_sold);
-  const soldGarments = allGarments.filter(g => g.is_sold);
-  const pendingPayment = allGarments.filter(g => g.payment_status === 'pending');
+  const availableGarments = garments.filter(g => !g.is_sold);
+  const soldGarments = garments.filter(g => g.is_sold);
+  const pendingPayment = garments.filter(g => g.payment_status === 'pending');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -200,15 +362,15 @@ const SupplierDetail: React.FC = () => {
           <CardHeader>
             <CardTitle>
               Inventario de Prendas 
-              {filteredGarments.length !== allGarments.length && (
+              {filteredGarments.length !== garments.length && (
                 <span className="text-sm font-normal text-gray-500 ml-2">
-                  ({filteredGarments.length} de {allGarments.length})
+                  ({filteredGarments.length} de {garments.length})
                 </span>
               )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {allGarments.length === 0 ? (
+            {garments.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500 mb-4">
                   No hay prendas registradas para este proveedor
