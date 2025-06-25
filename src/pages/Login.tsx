@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('admin@consignapp.com');
@@ -13,6 +15,15 @@ const Login = () => {
   const [isCreatingUsers, setIsCreatingUsers] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      console.log('User already logged in, redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const createTestUsers = async () => {
     setIsCreatingUsers(true);
@@ -82,12 +93,12 @@ const Login = () => {
           variant: "destructive",
         });
       } else {
-        console.log('Login successful:', data);
+        console.log('Login successful, user data:', data.user);
         toast({
           title: "Login exitoso",
           description: "Bienvenido a ConsignApp",
         });
-        navigate('/dashboard');
+        // Don't navigate here, let the useEffect handle it when user state updates
       }
     } catch (error) {
       console.error('Login exception:', error);
