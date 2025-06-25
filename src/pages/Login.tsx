@@ -28,7 +28,7 @@ const Login = () => {
         console.error('Login error:', error);
         toast({
           title: "Error de login",
-          description: error.message,
+          description: "Credenciales inválidas o usuario no encontrado",
           variant: "destructive",
         });
       } else {
@@ -51,42 +51,9 @@ const Login = () => {
     setLoading(false);
   };
 
-  const handleSignUp = async () => {
-    setLoading(true);
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`
-        }
-      });
-
-      if (error) {
-        console.error('SignUp error:', error);
-        toast({
-          title: "Error de registro",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        console.log('SignUp successful:', data);
-        toast({
-          title: "Registro exitoso",
-          description: "Revisa tu email para confirmar la cuenta",
-        });
-      }
-    } catch (error) {
-      console.error('SignUp exception:', error);
-      toast({
-        title: "Error",
-        description: "Error inesperado durante el registro",
-        variant: "destructive",
-      });
-    }
-
-    setLoading(false);
+  const setCredentials = (email: string, password: string) => {
+    setEmail(email);
+    setPassword(password);
   };
 
   return (
@@ -124,33 +91,55 @@ const Login = () => {
               />
             </div>
             
+            <Button 
+              type="submit" 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              disabled={loading}
+            >
+              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+            </Button>
+          </form>
+          
+          <div className="mt-6 space-y-2">
+            <p className="text-sm font-medium text-gray-700 mb-2">Usuarios disponibles:</p>
+            
             <div className="space-y-2">
               <Button 
-                type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                disabled={loading}
+                type="button"
+                variant="outline"
+                className="w-full text-left justify-start"
+                onClick={() => setCredentials('admin@consignapp.com', 'password123')}
               >
-                {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                <div className="flex flex-col items-start">
+                  <span className="font-medium">Admin</span>
+                  <span className="text-xs text-gray-500">admin@consignapp.com</span>
+                </div>
               </Button>
               
               <Button 
                 type="button"
                 variant="outline"
-                className="w-full"
-                onClick={handleSignUp}
-                disabled={loading}
+                className="w-full text-left justify-start"
+                onClick={() => setCredentials('vendedor1@consignapp.com', 'password123')}
               >
-                Registrarse
+                <div className="flex flex-col items-start">
+                  <span className="font-medium">Vendedor 1</span>
+                  <span className="text-xs text-gray-500">vendedor1@consignapp.com</span>
+                </div>
+              </Button>
+              
+              <Button 
+                type="button"
+                variant="outline"
+                className="w-full text-left justify-start"
+                onClick={() => setCredentials('vendedor2@consignapp.com', 'password123')}
+              >
+                <div className="flex flex-col items-start">
+                  <span className="font-medium">Vendedor 2</span>
+                  <span className="text-xs text-gray-500">vendedor2@consignapp.com</span>
+                </div>
               </Button>
             </div>
-          </form>
-          
-          <div className="mt-4 p-3 bg-blue-50 rounded-md">
-            <p className="text-xs text-blue-600">
-              <strong>Credenciales de prueba:</strong><br />
-              Email: admin@consignapp.com<br />
-              Contraseña: password123
-            </p>
           </div>
         </CardContent>
       </Card>
