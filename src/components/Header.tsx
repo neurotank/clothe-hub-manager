@@ -1,118 +1,57 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { LogOut, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-const Header: React.FC = () => {
+const Header = () => {
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout, user, isAdmin } = useAuth();
 
-  const handleLogout = async () => {
-    await logout();
+  const handleSignOut = async () => {
+    await signOut();
     navigate('/login');
   };
 
-  const isActiveRoute = (path: string) => {
-    return location.pathname === path;
-  };
+  const isOnSoldGarmentsPage = location.pathname === '/admin/sold-garments';
 
   return (
     <header className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-8">
-            <h1 
-              className="text-xl font-bold text-gray-900 cursor-pointer"
-              onClick={() => isAdmin ? navigate('/dashboard') : navigate('/my-garments')}
-            >
-              ConsignApp
-            </h1>
-            
-            {/* Navegación para todos los usuarios autenticados */}
-            <nav className="hidden md:flex space-x-4">
-              <Button
-                variant={isActiveRoute('/dashboard') ? 'default' : 'ghost'}
-                onClick={() => navigate('/dashboard')}
-                className={isActiveRoute('/dashboard') ? 'bg-blue-600 hover:bg-blue-700' : ''}
-              >
-                Dashboard
-              </Button>
-              
-              {/* Solo admin puede ver administración */}
-              {isAdmin && (
-                <Button
-                  variant={isActiveRoute('/admin/sold-garments') ? 'default' : 'ghost'}
-                  onClick={() => navigate('/admin/sold-garments')}
-                  className={isActiveRoute('/admin/sold-garments') ? 'bg-blue-600 hover:bg-blue-700' : ''}
-                >
-                  Administración
-                </Button>
-              )}
-              
-              {/* Mis Prendas para suppliers */}
-              {!isAdmin && (
-                <Button
-                  variant={isActiveRoute('/my-garments') ? 'default' : 'ghost'}
-                  onClick={() => navigate('/my-garments')}
-                  className={isActiveRoute('/my-garments') ? 'bg-blue-600 hover:bg-blue-700' : ''}
-                >
-                  Mis Prendas
-                </Button>
-              )}
-            </nav>
+          <div className="flex items-center">
+            <h1 className="text-xl font-semibold text-gray-900">ConsignApp</h1>
           </div>
           
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">
-              {user?.name} ({user?.role === 'admin' ? 'Administrador' : 'Vendedor'})
-            </span>
-            
-            <Button 
-              onClick={handleLogout}
-              variant="outline"
-              className="text-gray-700 hover:text-gray-900"
-            >
-              Cerrar sesión
-            </Button>
-          </div>
-        </div>
-        
-        {/* Mobile navigation */}
-        <div className="md:hidden pb-4">
-          <nav className="flex space-x-2">
-            <Button
-              variant={isActiveRoute('/dashboard') ? 'default' : 'ghost'}
-              onClick={() => navigate('/dashboard')}
-              size="sm"
-              className={isActiveRoute('/dashboard') ? 'bg-blue-600 hover:bg-blue-700' : ''}
-            >
-              Dashboard
-            </Button>
-            
-            {isAdmin && (
+            {!isOnSoldGarmentsPage && (
               <Button
-                variant={isActiveRoute('/admin/sold-garments') ? 'default' : 'ghost'}
+                variant="outline"
                 onClick={() => navigate('/admin/sold-garments')}
-                size="sm"
-                className={isActiveRoute('/admin/sold-garments') ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                className="hidden sm:flex items-center"
               >
-                Admin
+                <Users className="w-4 h-4 mr-2" />
+                Prendas Vendidas
               </Button>
             )}
             
-            {!isAdmin && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">
+                {user?.email}
+              </span>
               <Button
-                variant={isActiveRoute('/my-garments') ? 'default' : 'ghost'}
-                onClick={() => navigate('/my-garments')}
+                variant="outline"
                 size="sm"
-                className={isActiveRoute('/my-garments') ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                onClick={handleSignOut}
+                className="flex items-center"
               >
-                Mis Prendas
+                <LogOut className="w-4 h-4 mr-1" />
+                Salir
               </Button>
-            )}
-          </nav>
+            </div>
+          </div>
         </div>
       </div>
     </header>

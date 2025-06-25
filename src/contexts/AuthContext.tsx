@@ -1,92 +1,53 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, AuthContextType } from '../types/auth';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
-// Usuarios fijos del sistema con contraseñas - TODOS son admin o tienen acceso al dashboard
-const FIXED_USERS: (User & { password: string })[] = [
-  {
-    id: '550e8400-e29b-41d4-a716-446655440001',
-    email: 'admin@consignapp.com',
-    name: 'Administrador',
-    role: 'admin',
-    password: 'admin123',
-    auth_user_id: '550e8400-e29b-41d4-a716-446655440001',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '550e8400-e29b-41d4-a716-446655440002',
-    email: 'vendedor1@consignapp.com',
-    name: 'Vendedor 1',
-    role: 'admin', // Cambiado a admin para acceso al dashboard
-    password: 'vendedor123',
-    auth_user_id: '550e8400-e29b-41d4-a716-446655440002',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '550e8400-e29b-41d4-a716-446655440003',
-    email: 'vendedor2@consignapp.com',
-    name: 'Vendedor 2',
-    role: 'admin', // Cambiado a admin para acceso al dashboard
-    password: 'vendedor456',
-    auth_user_id: '550e8400-e29b-41d4-a716-446655440003',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
+interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  signOut: () => Promise<void>;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar si hay un usuario guardado en localStorage
-    const savedUserId = localStorage.getItem('currentUserId');
-    if (savedUserId) {
-      const foundUser = FIXED_USERS.find(u => u.id === savedUserId);
-      if (foundUser) {
-        const { password, ...userWithoutPassword } = foundUser;
-        setUser(userWithoutPassword);
+    // Configurar listener de cambios de autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('Auth state change:', event, session);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
       }
-    }
+    );
+
+    // Obtener sesión actual
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Current session:', session);
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const foundUser = FIXED_USERS.find(u => u.email === email && u.password === password);
-    if (foundUser) {
-      const { password: _, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem('currentUserId', foundUser.id);
-      return { error: null };
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Sign out error:', error);
     }
-    return { error: new Error('Email o contraseña incorrectos') };
   };
-
-  const loginWithGoogle = async () => {
-    return { error: new Error('Google login no disponible') };
-  };
-
-  const logout = async () => {
-    setUser(null);
-    localStorage.removeItem('currentUserId');
-  };
-
-  const isAdmin = user?.role === 'admin';
-  const isSupplier = user?.role === 'supplier';
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      session: null,
-      login,
-      loginWithGoogle,
-      logout,
-      isAuthenticated: !!user,
-      isAdmin,
-      isSupplier
-    }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

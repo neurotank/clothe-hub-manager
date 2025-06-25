@@ -1,103 +1,156 @@
 
 import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '../contexts/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
-const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const { login, isAuthenticated, isAdmin, isSupplier } = useAuth();
+const Login = () => {
+  const [email, setEmail] = useState('admin@consignapp.com');
+  const [password, setPassword] = useState('password123');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Redirigir según el rol del usuario
-  if (isAuthenticated) {
-    if (isAdmin) {
-      return <Navigate to="/dashboard" replace />;
-    } else if (isSupplier) {
-      return <Navigate to="/my-garments" replace />;
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
 
-    const { error } = await login(email, password);
-    
-    if (error) {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error('Login error:', error);
+        toast({
+          title: "Error de login",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        console.log('Login successful:', data);
+        toast({
+          title: "Login exitoso",
+          description: "Bienvenido a ConsignApp",
+        });
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Login exception:', error);
       toast({
-        title: "Error de autenticación",
-        description: error.message || "Usuario o contraseña incorrectos",
+        title: "Error",
+        description: "Error inesperado durante el login",
         variant: "destructive",
       });
-    } else {
+    }
+
+    setLoading(false);
+  };
+
+  const handleSignUp = async () => {
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+
+      if (error) {
+        console.error('SignUp error:', error);
+        toast({
+          title: "Error de registro",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        console.log('SignUp successful:', data);
+        toast({
+          title: "Registro exitoso",
+          description: "Revisa tu email para confirmar la cuenta",
+        });
+      }
+    } catch (error) {
+      console.error('SignUp exception:', error);
       toast({
-        title: "Login exitoso",
-        description: "Bienvenido a ConsignApp",
+        title: "Error",
+        description: "Error inesperado durante el registro",
+        variant: "destructive",
       });
     }
-    
-    setIsLoading(false);
+
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Iniciar Sesión</CardTitle>
-          <CardDescription>
-            ConsignApp - Gestión de Proveedores
-          </CardDescription>
+        <CardHeader>
+          <CardTitle className="text-center">ConsignApp</CardTitle>
+          <p className="text-center text-gray-600">Inicia sesión para continuar</p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
               <Input
-                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@consignapp.com"
                 required
-                placeholder="Ingrese su email"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Contraseña
+              </label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="password123"
+                required
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="Ingrese su contraseña"
-              />
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                disabled={loading}
+              >
+                {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              </Button>
+              
+              <Button 
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleSignUp}
+                disabled={loading}
+              >
+                Registrarse
+              </Button>
             </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading}
-            >
-              {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-            </Button>
           </form>
           
-          <div className="mt-6 text-xs text-gray-500 text-center">
-            <p className="font-medium mb-2">Credenciales de acceso:</p>
-            <div className="space-y-1">
-              <p><strong>Admin:</strong> admin@consignapp.com / admin123</p>
-              <p><strong>Vendedor 1:</strong> vendedor1@consignapp.com / vendedor123</p>
-              <p><strong>Vendedor 2:</strong> vendedor2@consignapp.com / vendedor456</p>
-            </div>
+          <div className="mt-4 p-3 bg-blue-50 rounded-md">
+            <p className="text-xs text-blue-600">
+              <strong>Credenciales de prueba:</strong><br />
+              Email: admin@consignapp.com<br />
+              Contraseña: password123
+            </p>
           </div>
         </CardContent>
       </Card>

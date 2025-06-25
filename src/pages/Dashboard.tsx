@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ const Dashboard: React.FC = () => {
   // Cargar suppliers
   const loadSuppliers = async () => {
     try {
+      console.log('Loading suppliers...');
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
@@ -59,6 +61,7 @@ const Dashboard: React.FC = () => {
   // Cargar prendas
   const loadGarments = async () => {
     try {
+      console.log('Loading garments...');
       const { data, error } = await supabase
         .from('garments')
         .select('*');
@@ -76,8 +79,11 @@ const Dashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    Promise.all([loadSuppliers(), loadGarments()]);
-  }, []);
+    if (user) {
+      console.log('User authenticated, loading data...');
+      Promise.all([loadSuppliers(), loadGarments()]);
+    }
+  }, [user]);
 
   // Filtrar proveedores basado en búsqueda
   const filteredSuppliers = useMemo(() => {
