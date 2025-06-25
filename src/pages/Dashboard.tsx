@@ -20,7 +20,7 @@ import { useNavigate } from 'react-router-dom';
 const ITEMS_PER_PAGE = 20;
 
 const Dashboard = () => {
-  const { suppliers, loading } = useSupabaseData();
+  const { suppliers, loading, deleteSupplier } = useSupabaseData();
   const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -38,6 +38,10 @@ const Dashboard = () => {
 
   const handleSupplierClick = (supplierId: string) => {
     navigate(`/supplier/${supplierId}`);
+  };
+
+  const handleDeleteSupplier = (supplierId: string) => {
+    deleteSupplier(supplierId);
   };
 
   const handlePageChange = (page: number) => {
@@ -115,6 +119,7 @@ const Dashboard = () => {
                   <SuppliersTable 
                     suppliers={paginatedSuppliers}
                     onSupplierClick={handleSupplierClick}
+                    onDeleteSupplier={handleDeleteSupplier}
                   />
                 </div>
               </div>

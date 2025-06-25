@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Supplier } from '../types';
 import { Button } from '@/components/ui/button';
-import { Eye } from 'lucide-react';
+import { Eye, Trash2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -11,15 +11,37 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import DeleteSupplierDialog from './DeleteSupplierDialog';
 
 interface SuppliersTableProps {
   suppliers: Supplier[];
   onSupplierClick: (supplierId: string) => void;
+  onDeleteSupplier: (supplierId: string) => void;
 }
 
-const SuppliersTable: React.FC<SuppliersTableProps> = ({ suppliers, onSupplierClick }) => {
+const SuppliersTable: React.FC<SuppliersTableProps> = ({ 
+  suppliers, 
+  onSupplierClick, 
+  onDeleteSupplier 
+}) => {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-AR');
+  };
+
+  const handleDeleteClick = (supplier: Supplier) => {
+    setSupplierToDelete(supplier);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (supplierToDelete) {
+      onDeleteSupplier(supplierToDelete.id);
+      setDeleteDialogOpen(false);
+      setSupplierToDelete(null);
+    }
   };
 
   if (suppliers.length === 0) {
@@ -31,43 +53,63 @@ const SuppliersTable: React.FC<SuppliersTableProps> = ({ suppliers, onSupplierCl
   }
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nombre</TableHead>
-            <TableHead>Apellido</TableHead>
-            <TableHead>Teléfono</TableHead>
-            <TableHead>Fecha de Registro</TableHead>
-            <TableHead className="text-center">Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {suppliers.map((supplier) => (
-            <TableRow 
-              key={supplier.id}
-              className="hover:bg-gray-50 transition-colors"
-            >
-              <TableCell className="font-medium">{supplier.name}</TableCell>
-              <TableCell>{supplier.surname}</TableCell>
-              <TableCell>{supplier.phone}</TableCell>
-              <TableCell>{formatDate(supplier.created_at)}</TableCell>
-              <TableCell className="text-center">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onSupplierClick(supplier.id)}
-                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Ver Detalles
-                </Button>
-              </TableCell>
+    <>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Apellido</TableHead>
+              <TableHead>Teléfono</TableHead>
+              <TableHead>Fecha de Registro</TableHead>
+              <TableHead className="text-center">Acciones</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {suppliers.map((supplier) => (
+              <TableRow 
+                key={supplier.id}
+                className="hover:bg-gray-50 transition-colors"
+              >
+                <TableCell className="font-medium">{supplier.name}</TableCell>
+                <TableCell>{supplier.surname}</TableCell>
+                <TableCell>{supplier.phone}</TableCell>
+                <TableCell>{formatDate(supplier.created_at)}</TableCell>
+                <TableCell className="text-center">
+                  <div className="flex justify-center space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onSupplierClick(supplier.id)}
+                      className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Ver Detalles
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeleteClick(supplier)}
+                      className="text-red-600 border-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Eliminar
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <DeleteSupplierDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        supplierName={supplierToDelete ? `${supplierToDelete.name} ${supplierToDelete.surname}` : ''}
+      />
+    </>
   );
 };
 

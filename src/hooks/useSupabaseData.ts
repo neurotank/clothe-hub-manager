@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -263,6 +262,51 @@ export const useSupabaseData = () => {
     }
   };
 
+  const deleteSupplier = async (supplierId: string) => {
+    try {
+      // First, check if supplier has any garments
+      const garmentsBySupplier = garments.filter(garment => garment.supplier_id === supplierId);
+      
+      if (garmentsBySupplier.length > 0) {
+        toast({
+          title: "No se puede eliminar",
+          description: "El proveedor tiene prendas asociadas. Elimine las prendas primero.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('suppliers')
+        .delete()
+        .eq('id', supplierId);
+
+      if (error) {
+        console.error('Error deleting supplier:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo eliminar el proveedor",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Proveedor eliminado correctamente",
+      });
+
+      // The real-time subscription will handle the update
+    } catch (error) {
+      console.error('Exception deleting supplier:', error);
+      toast({
+        title: "Error",
+        description: "Error inesperado al eliminar proveedor",
+        variant: "destructive",
+      });
+    }
+  };
+
   const addGarment = async (supplierId: string, garmentData: GarmentFormData) => {
     try {
       const userId = await getUserData();
@@ -469,6 +513,7 @@ Tu prenda "${garment.name}" se ha vendido exitosamente.
     loading,
     userRole,
     addSupplier,
+    deleteSupplier,
     addGarment,
     markAsSold,
     markAsPaid,
