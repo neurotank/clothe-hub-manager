@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,54 +11,50 @@ export const useSupabaseData = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [garments, setGarments] = useState<Garment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const channelRef = useRef<any>(null);
   const isSubscribedRef = useRef(false);
 
-  // Get user ID from users table
-  const getUserId = useCallback(async () => {
+  // Get user ID and role from users table
+  const getUserData = useCallback(async () => {
     if (!user) {
       console.log('No user found');
       return null;
     }
     
     try {
-      console.log('Getting user ID for auth user:', user.id);
+      console.log('Getting user data for auth user:', user.id);
       
       const { data, error } = await supabase
         .from('users')
-        .select('id')
+        .select('id, role')
         .eq('auth_user_id', user.id)
         .maybeSingle();
       
       if (error) {
-        console.error('Error getting user ID:', error);
+        console.error('Error getting user data:', error);
         return null;
       }
       
-      console.log('Found user by auth_user_id:', data);
+      console.log('Found user data:', data);
+      if (data) {
+        setUserRole(data.role);
+      }
       return data?.id || null;
     } catch (error) {
-      console.error('Exception getting user ID:', error);
+      console.error('Exception getting user data:', error);
       return null;
     }
   }, [user]);
 
-  // Load suppliers with error handling
+  // Load suppliers without user_id filtering - show all suppliers
   const fetchSuppliers = useCallback(async () => {
     try {
-      const userId = await getUserId();
-      if (!userId) {
-        console.log('No user ID found, skipping suppliers fetch');
-        setSuppliers([]);
-        return;
-      }
-
-      console.log('Fetching suppliers for user:', userId);
+      console.log('Fetching all suppliers');
 
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
-        .eq('user_id', userId)
         .order('name', { ascending: true });
 
       if (error) {
@@ -76,24 +73,16 @@ export const useSupabaseData = () => {
       console.error('Exception fetching suppliers:', error);
       setSuppliers([]);
     }
-  }, [getUserId, toast]);
+  }, [toast]);
 
-  // Load garments with error handling
+  // Load garments without user_id filtering - show all garments
   const fetchGarments = useCallback(async () => {
     try {
-      const userId = await getUserId();
-      if (!userId) {
-        console.log('No user ID found, skipping garments fetch');
-        setGarments([]);
-        return;
-      }
-
-      console.log('Fetching garments for user:', userId);
+      console.log('Fetching all garments');
 
       const { data, error } = await supabase
         .from('garments')
         .select('*')
-        .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -112,7 +101,7 @@ export const useSupabaseData = () => {
       console.error('Exception fetching garments:', error);
       setGarments([]);
     }
-  }, [getUserId, toast]);
+  }, [toast]);
 
   // Load initial data
   useEffect(() => {
@@ -121,6 +110,7 @@ export const useSupabaseData = () => {
       const loadData = async () => {
         setLoading(true);
         try {
+          await getUserData();
           await Promise.all([fetchSuppliers(), fetchGarments()]);
         } catch (error) {
           console.error('Error loading data:', error);
@@ -133,9 +123,10 @@ export const useSupabaseData = () => {
       console.log('No user, clearing data...');
       setSuppliers([]);
       setGarments([]);
+      setUserRole(null);
       setLoading(false);
     }
-  }, [user?.id, fetchSuppliers, fetchGarments]);
+  }, [user?.id, fetchSuppliers, fetchGarments, getUserData]);
 
   // Set up real-time subscriptions with proper cleanup
   useEffect(() => {
@@ -145,9 +136,6 @@ export const useSupabaseData = () => {
 
     const setupRealtimeSubscription = async () => {
       try {
-        const userId = await getUserId();
-        if (!userId) return;
-
         // Clean up any existing channel
         if (channelRef.current) {
           console.log('Cleaning up existing channel');
@@ -156,7 +144,7 @@ export const useSupabaseData = () => {
         }
 
         // Create a new channel
-        const channel = supabase.channel(`db-changes-${userId}-${Date.now()}`);
+        const channel = supabase.channel(`db-changes-${user.id}-${Date.now()}`);
         
         channel
           .on(
@@ -172,7 +160,6 @@ export const useSupabaseData = () => {
                 const { data } = await supabase
                   .from('suppliers')
                   .select('*')
-                  .eq('user_id', userId)
                   .order('name', { ascending: true });
                 if (data) setSuppliers(data);
               } catch (error) {
@@ -193,7 +180,6 @@ export const useSupabaseData = () => {
                 const { data } = await supabase
                   .from('garments')
                   .select('*')
-                  .eq('user_id', userId)
                   .order('created_at', { ascending: false });
                 if (data) setGarments(data);
               } catch (error) {
@@ -224,11 +210,11 @@ export const useSupabaseData = () => {
       }
       isSubscribedRef.current = false;
     };
-  }, [user?.id, getUserId]);
+  }, [user?.id]);
 
   const addSupplier = async (supplierData: SupplierFormData) => {
     try {
-      const userId = await getUserId();
+      const userId = await getUserData();
       if (!userId) {
         toast({
           title: "Error",
@@ -279,7 +265,7 @@ export const useSupabaseData = () => {
 
   const addGarment = async (supplierId: string, garmentData: GarmentFormData) => {
     try {
-      const userId = await getUserId();
+      const userId = await getUserData();
       if (!userId) {
         toast({
           title: "Error",
@@ -481,6 +467,7 @@ Tu prenda "${garment.name}" se ha vendido exitosamente.
     suppliers,
     garments,
     loading,
+    userRole,
     addSupplier,
     addGarment,
     markAsSold,

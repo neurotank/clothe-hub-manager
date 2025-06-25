@@ -5,9 +5,11 @@ import { LogOut, BarChart3, Package } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useSupabaseData } from '../hooks/useSupabaseData';
 
 const Header = () => {
   const { signOut, user } = useAuth();
+  const { userRole } = useSupabaseData();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
@@ -19,8 +21,8 @@ const Header = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Only admin user can access admin dashboard
-  const isAdmin = user?.email === 'admin@consignapp.com';
+  // Only admin role can access admin dashboard
+  const isAdmin = userRole === 'admin';
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
