@@ -114,6 +114,13 @@ const Dashboard: React.FC = () => {
     return garments.filter(g => g.supplier_id === supplierId);
   };
 
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS'
+    }).format(price);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">

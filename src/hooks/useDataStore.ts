@@ -49,6 +49,7 @@ export const useDataStore = () => {
     const newSupplier: Supplier = {
       id: Date.now().toString(),
       ...supplierData,
+      created_at: new Date().toISOString(),
     };
 
     const updatedSuppliers = [...suppliers, newSupplier];

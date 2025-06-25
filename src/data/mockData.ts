@@ -1,30 +1,29 @@
-
 import { Supplier, Garment } from '../types';
 
 export const mockSuppliers: Supplier[] = [
   {
     id: "11111111-1111-1111-1111-111111111111",
-    name: "María García",
-    phone: "+34 666 123 456",
-    address: "Calle Mayor 123, Madrid",
-    email: "maria.garcia@email.com",
-    user_id: "550e8400-e29b-41d4-a716-446655440002"
+    name: "María",
+    surname: "García",
+    phone: "381 4743147",
+    user_id: "550e8400-e29b-41d4-a716-446655440002",
+    created_at: "2024-01-15T10:30:00Z"
   },
   {
     id: "22222222-2222-2222-2222-222222222222",
-    name: "Carmen López",
-    phone: "+34 677 234 567",
-    address: "Avenida Central 456, Barcelona",
-    email: "carmen.lopez@email.com",
-    user_id: "550e8400-e29b-41d4-a716-446655440003"
+    name: "Carmen",
+    surname: "López",
+    phone: "381 5234567",
+    user_id: "550e8400-e29b-41d4-a716-446655440003",
+    created_at: "2024-01-16T10:30:00Z"
   },
   {
     id: "33333333-3333-3333-3333-333333333333",
-    name: "Ana Martínez",
-    phone: "+34 688 345 678",
-    address: "Plaza España 789, Valencia",
-    email: "ana.martinez@email.com",
-    user_id: "550e8400-e29b-41d4-a716-446655440002"
+    name: "Ana",
+    surname: "Martínez",
+    phone: "381 6345678",
+    user_id: "550e8400-e29b-41d4-a716-446655440002",
+    created_at: "2024-01-17T10:30:00Z"
   }
 ];
 

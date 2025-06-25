@@ -71,30 +71,27 @@ export type Database = {
       }
       suppliers: {
         Row: {
-          address: string
           created_at: string | null
-          email: string
           id: string
           name: string
           phone: string
+          surname: string
           user_id: string | null
         }
         Insert: {
-          address: string
           created_at?: string | null
-          email: string
           id?: string
           name: string
           phone: string
+          surname?: string
           user_id?: string | null
         }
         Update: {
-          address?: string
           created_at?: string | null
-          email?: string
           id?: string
           name?: string
           phone?: string
+          surname?: string
           user_id?: string | null
         }
         Relationships: [
