@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -39,8 +38,6 @@ const SupplierDetail = () => {
   
   const [isAddGarmentOpen, setIsAddGarmentOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sizeFilter, setSizeFilter] = useState('');
-  const [codeFilter, setCodeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   
@@ -66,9 +63,11 @@ const SupplierDetail = () => {
   const allGarments = id ? getGarmentsBySupplier(id) : [];
 
   const filteredGarments = allGarments.filter(garment => {
-    const matchesSearch = garment.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSize = !sizeFilter || garment.size.toLowerCase().includes(sizeFilter.toLowerCase());
-    const matchesCode = !codeFilter || garment.code.toLowerCase().includes(codeFilter.toLowerCase());
+    // Combined search: name, size, and code
+    const matchesSearch = searchTerm === '' || 
+      garment.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      garment.size.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      garment.code.toLowerCase().includes(searchTerm.toLowerCase());
     
     let matchesStatus = true;
     if (statusFilter === 'available') {
@@ -81,7 +80,7 @@ const SupplierDetail = () => {
       matchesStatus = garment.payment_status === 'paid';
     }
     
-    return matchesSearch && matchesSize && matchesCode && matchesStatus;
+    return matchesSearch && matchesStatus;
   });
 
   const totalPages = Math.ceil(filteredGarments.length / ITEMS_PER_PAGE);
@@ -95,7 +94,7 @@ const SupplierDetail = () => {
   // Reset page when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, sizeFilter, codeFilter, statusFilter]);
+  }, [searchTerm, statusFilter]);
 
   const handleSellClick = (garmentId: string, garmentName: string) => {
     setSellDialog({
@@ -178,7 +177,7 @@ const SupplierDetail = () => {
                 className="mb-4"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver a Proveedores
+                Volver
               </Button>
             </div>
           )}
@@ -210,11 +209,7 @@ const SupplierDetail = () => {
                 onSearchChange={setSearchTerm}
                 statusFilter={statusFilter}
                 onStatusFilterChange={setStatusFilter}
-                sizeFilter={sizeFilter}
-                onSizeFilterChange={setSizeFilter}
-                codeFilter={codeFilter}
-                onCodeFilterChange={setCodeFilter}
-                searchPlaceholder="Buscar por nombre de prenda..."
+                searchPlaceholder="Buscar por nombre, talle o código..."
               />
               
               <GarmentsTable

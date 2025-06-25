@@ -16,10 +16,6 @@ interface SearchAndFiltersProps {
   showSupplierFilter?: boolean;
   supplierFilter?: string;
   onSupplierFilterChange?: (value: string) => void;
-  sizeFilter?: string;
-  onSizeFilterChange?: (value: string) => void;
-  codeFilter?: string;
-  onCodeFilterChange?: (value: string) => void;
   searchPlaceholder?: string;
   showBackButton?: boolean;
   onBack?: () => void;
@@ -35,10 +31,6 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
   showSupplierFilter = false,
   supplierFilter = '',
   onSupplierFilterChange,
-  sizeFilter = '',
-  onSizeFilterChange,
-  codeFilter = '',
-  onCodeFilterChange,
   searchPlaceholder = "Buscar...",
   showBackButton = false,
   onBack
@@ -65,17 +57,13 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
   const hasActiveFilters = searchTerm || 
     (statusFilter && statusFilter !== 'all') || 
     supplierFilter || 
-    phoneFilter || 
-    sizeFilter || 
-    codeFilter;
+    phoneFilter;
 
   const clearAllFilters = () => {
     onSearchChange('');
     if (onStatusFilterChange) onStatusFilterChange('all');
     if (onSupplierFilterChange) onSupplierFilterChange('');
     if (onPhoneFilterChange) onPhoneFilterChange('');
-    if (onSizeFilterChange) onSizeFilterChange('');
-    if (onCodeFilterChange) onCodeFilterChange('');
   };
 
   return (
@@ -121,24 +109,6 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
               value={supplierFilter}
               onChange={(e) => onSupplierFilterChange(e.target.value)}
               className="sm:w-48"
-            />
-          )}
-
-          {sizeFilter !== undefined && onSizeFilterChange && (
-            <Input
-              placeholder="Filtrar por talle..."
-              value={sizeFilter}
-              onChange={(e) => onSizeFilterChange(e.target.value)}
-              className="sm:w-32"
-            />
-          )}
-
-          {codeFilter !== undefined && onCodeFilterChange && (
-            <Input
-              placeholder="Filtrar por código..."
-              value={codeFilter}
-              onChange={(e) => onCodeFilterChange(e.target.value)}
-              className="sm:w-40"
             />
           )}
         </div>

@@ -1,23 +1,31 @@
-
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Users, Package, DollarSign, TrendingUp, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
-import GarmentsTable from '../components/GarmentsTable';
-import PaymentConfirmDialog from '../components/PaymentConfirmDialog';
-import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
 import MonthFilter from '../components/MonthFilter';
+import SearchAndFilters from '../components/SearchAndFilters';
+import GarmentsTable from '../components/GarmentsTable';
+import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
 import { useSupabaseData } from '../hooks/useSupabaseData';
+import { useIsMobile } from '../hooks/use-mobile';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const {
     suppliers,
-    getAllSoldGarments,
-    markAsPaid,
+    garments,
     deleteGarment,
     loading
   } = useSupabaseData();
   
   const [selectedMonth, setSelectedMonth] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [supplierFilter, setSupplierFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
   
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
@@ -25,22 +33,46 @@ const AdminDashboard = () => {
     garmentName: string;
   }>({ open: false, garmentId: null, garmentName: '' });
 
-  const [paymentDialog, setPaymentDialog] = useState<{
-    open: boolean;
-    garmentId: string | null;
-    garmentName: string;
-  }>({ open: false, garmentId: null, garmentName: '' });
+  const filteredGarments = garments.filter(garment => {
+    const matchesSearch = garment.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSupplier = !supplierFilter || 
+      suppliers.find(s => s.id === garment.supplier_id)?.name.toLowerCase().includes(supplierFilter.toLowerCase()) ||
+      suppliers.find(s => s.id === garment.supplier_id)?.surname.toLowerCase().includes(supplierFilter.toLowerCase());
+    
+    let matchesStatus = true;
+    if (statusFilter === 'available') {
+      matchesStatus = !garment.is_sold;
+    } else if (statusFilter === 'sold') {
+      matchesStatus = garment.is_sold;
+    } else if (statusFilter === 'pending_payment') {
+      matchesStatus = garment.is_sold && garment.payment_status === 'pending';
+    } else if (statusFilter === 'paid') {
+      matchesStatus = garment.payment_status === 'paid';
+    }
 
-  const allSoldGarments = getAllSoldGarments();
+    let matchesMonth = true;
+    if (selectedMonth) {
+      const garmentMonth = new Date(garment.created_at).toISOString().slice(0, 7);
+      matchesMonth = garmentMonth === selectedMonth;
+    }
+    
+    return matchesSearch && matchesSupplier && matchesStatus && matchesMonth;
+  });
 
-  const filteredGarments = selectedMonth
-    ? allSoldGarments.filter(garment => {
-        const soldDate = garment.sold_at ? new Date(garment.sold_at) : new Date(garment.created_at);
-        const [year, month] = selectedMonth.split('-');
-        return soldDate.getFullYear() === parseInt(year) && 
-               soldDate.getMonth() === parseInt(month) - 1;
-      })
-    : allSoldGarments;
+  const soldGarments = filteredGarments.filter(g => g.is_sold);
+  const availableGarments = filteredGarments.filter(g => !g.is_sold);
+  const pendingPayments = filteredGarments.filter(g => g.is_sold && g.payment_status === 'pending');
+
+  const totalRevenue = soldGarments.reduce((sum, garment) => sum + garment.sale_price, 0);
+  const totalCost = soldGarments.reduce((sum, garment) => sum + garment.purchase_price, 0);
+  const totalProfit = totalRevenue - totalCost;
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS'
+    }).format(price);
+  };
 
   const handleDeleteClick = (garmentId: string, garmentName: string) => {
     setDeleteDialog({
@@ -54,34 +86,6 @@ const AdminDashboard = () => {
     if (!deleteDialog.garmentId) return;
     await deleteGarment(deleteDialog.garmentId);
     setDeleteDialog({ open: false, garmentId: null, garmentName: '' });
-  };
-
-  const handlePaymentClick = (garmentId: string, garmentName: string) => {
-    setPaymentDialog({
-      open: true,
-      garmentId,
-      garmentName
-    });
-  };
-
-  const handlePaymentConfirm = async () => {
-    if (!paymentDialog.garmentId) return;
-    await markAsPaid(paymentDialog.garmentId);
-    setPaymentDialog({ open: false, garmentId: null, garmentName: '' });
-  };
-
-  // Calcular estadísticas
-  const totalSales = filteredGarments.reduce((sum, garment) => sum + garment.sale_price, 0);
-  const totalPurchases = filteredGarments.reduce((sum, garment) => sum + garment.purchase_price, 0);
-  const totalProfit = totalSales - totalPurchases;
-  const pendingPayments = filteredGarments.filter(g => g.payment_status === 'pending').length;
-  const paidGarments = filteredGarments.filter(g => g.payment_status === 'paid').length;
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS'
-    }).format(price);
   };
 
   if (loading) {
@@ -101,79 +105,135 @@ const AdminDashboard = () => {
       
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Panel de Administrador</h1>
-            <p className="text-gray-600">Estadísticas de ventas y gestión de pagos</p>
+          {isMobile && (
+            <div className="mb-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/dashboard')}
+                className="mb-4"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Volver
+              </Button>
+            </div>
+          )}
+          
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-900">Panel de Administración</h1>
+            <p className="text-gray-600 mt-1">Resumen general del negocio</p>
           </div>
 
-          {/* Estadísticas */}
+          <MonthFilter
+            selectedMonth={selectedMonth}
+            onMonthChange={setSelectedMonth}
+          />
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Ventas Totales</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Proveedores</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{formatPrice(totalSales)}</div>
-                <p className="text-xs text-gray-500">{filteredGarments.length} prendas vendidas</p>
+                <div className="text-2xl font-bold">{suppliers.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  Total registrados
+                </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Ganancia Total</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Prendas</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{formatPrice(totalProfit)}</div>
-                <p className="text-xs text-gray-500">Venta - Compra</p>
+                <div className="text-2xl font-bold">{filteredGarments.length}</div>
+                <div className="flex gap-2 mt-2">
+                  <Badge variant="default" className="bg-green-100 text-green-800">
+                    {availableGarments.length} disponibles
+                  </Badge>
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                    {soldGarments.length} vendidas
+                  </Badge>
+                </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Pagos Pendientes</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Ingresos</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">{pendingPayments}</div>
-                <p className="text-xs text-gray-500">Prendas por pagar</p>
+                <div className="text-2xl font-bold text-green-600">
+                  {formatPrice(totalRevenue)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {soldGarments.length} prendas vendidas
+                </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Pagos Realizados</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Ganancia</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-600">{paidGarments}</div>
-                <p className="text-xs text-gray-500">Prendas pagadas</p>
+                <div className="text-2xl font-bold text-blue-600">
+                  {formatPrice(totalProfit)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Margen: {totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0}%
+                </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Tabla de prendas vendidas */}
+          {pendingPayments.length > 0 && (
+            <Card className="mb-8 border-yellow-200 bg-yellow-50">
+              <CardHeader>
+                <CardTitle className="text-yellow-800">Pagos Pendientes</CardTitle>
+                <CardDescription className="text-yellow-700">
+                  Hay {pendingPayments.length} prendas vendidas con pago pendiente
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-800">
+                  {formatPrice(pendingPayments.reduce((sum, g) => sum + g.sale_price, 0))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <CardTitle>Prendas Vendidas</CardTitle>
-                  <p className="text-gray-600 mt-1">
-                    {filteredGarments.length} prendas encontradas
-                  </p>
-                </div>
-                <MonthFilter
-                  selectedMonth={selectedMonth}
-                  onMonthChange={setSelectedMonth}
-                />
-              </div>
+              <CardTitle>Todas las Prendas</CardTitle>
+              <CardDescription>
+                Gestión completa del inventario
+              </CardDescription>
             </CardHeader>
             <CardContent>
+              <SearchAndFilters
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                statusFilter={statusFilter}
+                onStatusFilterChange={setStatusFilter}
+                showSupplierFilter={true}
+                supplierFilter={supplierFilter}
+                onSupplierFilterChange={setSupplierFilter}
+                searchPlaceholder="Buscar por nombre de prenda..."
+              />
+              
               <GarmentsTable
                 garments={filteredGarments}
-                onMarkAsPaid={handlePaymentClick}
                 onDelete={handleDeleteClick}
+                hideActions={['markAsSold', 'markAsPaid']}
                 suppliers={suppliers}
                 showSupplierColumn={true}
                 adminMode={true}
-                hideActions={['markAsSold']}
               />
             </CardContent>
           </Card>
@@ -185,13 +245,6 @@ const AdminDashboard = () => {
         onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}
         onConfirm={handleDeleteConfirm}
         itemName={deleteDialog.garmentName}
-      />
-
-      <PaymentConfirmDialog
-        open={paymentDialog.open}
-        onOpenChange={(open) => setPaymentDialog(prev => ({ ...prev, open }))}
-        onConfirm={handlePaymentConfirm}
-        garmentName={paymentDialog.garmentName}
       />
     </div>
   );

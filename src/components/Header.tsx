@@ -36,20 +36,29 @@ const Header = () => {
                 Proveedores
               </Button>
               
-              {!isMobile && (
-                <Button
-                  variant={isActive('/admin') ? 'default' : 'ghost'}
-                  onClick={() => navigate('/admin')}
-                  className="text-sm"
-                >
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  Administrador
-                </Button>
-              )}
+              <Button
+                variant={isActive('/admin') ? 'default' : 'ghost'}
+                onClick={() => navigate('/admin')}
+                className="text-sm"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Administrador
+              </Button>
             </nav>
           </div>
           
           <div className="flex items-center space-x-4">
+            {isMobile && location.pathname === '/dashboard' && (
+              <Button
+                variant="outline"
+                onClick={() => navigate('/admin')}
+                className="text-sm"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Admin
+              </Button>
+            )}
+            
             <Button
               variant="outline"
               onClick={handleSignOut}
