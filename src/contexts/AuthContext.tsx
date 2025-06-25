@@ -20,48 +20,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log('Setting up auth state listener...');
     
-    // Configurar listener de cambios de autenticación
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Error getting initial session:', error);
+      } else {
+        console.log('Initial session:', session);
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
+      setLoading(false);
+    });
+
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state change:', event, session);
         setSession(session);
         setUser(session?.user ?? null);
+        setLoading(false);
         
-        // Si hay una nueva sesión, actualizar el auth_user_id en la tabla users
+        // Update auth_user_id only when signing in
         if (session?.user && event === 'SIGNED_IN') {
-          console.log('Updating user auth_user_id:', session.user.id);
-          const { error } = await supabase
-            .from('users')
-            .update({ auth_user_id: session.user.id })
-            .eq('email', session.user.email);
-          
-          if (error) {
-            console.error('Error updating auth_user_id:', error);
-          } else {
-            console.log('Successfully updated auth_user_id');
+          try {
+            console.log('Updating user auth_user_id:', session.user.id);
+            const { error } = await supabase
+              .from('users')
+              .upsert({ 
+                auth_user_id: session.user.id, 
+                email: session.user.email || '',
+                name: session.user.email || 'Usuario'
+              }, { 
+                onConflict: 'email' 
+              });
+            
+            if (error) {
+              console.error('Error updating/creating user:', error);
+            } else {
+              console.log('Successfully updated/created user');
+            }
+          } catch (error) {
+            console.error('Exception updating user:', error);
           }
         }
-        
-        setLoading(false);
       }
     );
 
-    // Obtener sesión actual
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Current session:', session);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('Cleaning up auth subscription');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
     console.log('Signing out...');
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Sign out error:', error);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+      } else {
+        console.log('Successfully signed out');
+      }
+    } catch (error) {
+      console.error('Exception during sign out:', error);
     }
   };
 

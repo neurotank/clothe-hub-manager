@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -28,7 +27,7 @@ const Login = () => {
     for (const user of testUsers) {
       try {
         console.log(`Creating user: ${user.email}`);
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email: user.email,
           password: user.password,
           options: {
@@ -67,25 +66,21 @@ const Login = () => {
       if (error) {
         console.error('Login error:', error);
         
+        let errorMessage = "Error durante el login";
+        
         if (error.message.includes('Invalid login credentials')) {
-          toast({
-            title: "Error de login",
-            description: "Credenciales inválidas. ¿Has creado los usuarios de prueba?",
-            variant: "destructive",
-          });
+          errorMessage = "Credenciales inválidas. ¿Has creado los usuarios de prueba?";
         } else if (error.message.includes('Email not confirmed')) {
-          toast({
-            title: "Email no confirmado",
-            description: "Por favor confirma tu email o desactiva la confirmación en Supabase",
-            variant: "destructive",
-          });
+          errorMessage = "Email no confirmado. Por favor confirma tu email o desactiva la confirmación en Supabase";
         } else {
-          toast({
-            title: "Error de login",
-            description: error.message,
-            variant: "destructive",
-          });
+          errorMessage = error.message;
         }
+        
+        toast({
+          title: "Error de login",
+          description: errorMessage,
+          variant: "destructive",
+        });
       } else {
         console.log('Login successful:', data);
         toast({
@@ -101,14 +96,14 @@ const Login = () => {
         description: "Error inesperado durante el login",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  const setCredentials = (email: string, password: string) => {
-    setEmail(email);
-    setPassword(password);
+  const setCredentials = (newEmail: string, newPassword: string) => {
+    setEmail(newEmail);
+    setPassword(newPassword);
   };
 
   return (

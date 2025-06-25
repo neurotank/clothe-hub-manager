@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Supplier, Garment, GarmentFormData, SupplierFormData } from '../types';
@@ -11,108 +12,133 @@ export const useSupabaseData = () => {
   const [garments, setGarments] = useState<Garment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Obtener el user_id de la tabla users basado en el auth_user_id
-  const getUserId = async () => {
+  // Get user ID from users table
+  const getUserId = useCallback(async () => {
     if (!user) {
       console.log('No user found');
       return null;
     }
     
-    console.log('Getting user ID for auth user:', user.id);
-    
-    const { data, error } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_user_id', user.id)
-      .single();
-    
-    if (error) {
-      console.error('Error getting user ID:', error);
-      // Si no se encuentra el usuario, intentar buscarlo por email
-      const { data: emailData, error: emailError } = await supabase
+    try {
+      console.log('Getting user ID for auth user:', user.id);
+      
+      const { data, error } = await supabase
         .from('users')
         .select('id')
-        .eq('email', user.email)
-        .single();
+        .eq('auth_user_id', user.id)
+        .maybeSingle();
       
-      if (emailError) {
-        console.error('Error getting user by email:', emailError);
-        return null;
+      if (error) {
+        console.error('Error getting user ID:', error);
+        // Try by email as fallback
+        const { data: emailData, error: emailError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', user.email)
+          .maybeSingle();
+        
+        if (emailError) {
+          console.error('Error getting user by email:', emailError);
+          return null;
+        }
+        
+        console.log('Found user by email:', emailData);
+        return emailData?.id || null;
       }
       
-      console.log('Found user by email:', emailData);
-      return emailData?.id;
+      console.log('Found user by auth_user_id:', data);
+      return data?.id || null;
+    } catch (error) {
+      console.error('Exception getting user ID:', error);
+      return null;
     }
-    
-    console.log('Found user by auth_user_id:', data);
-    return data?.id;
-  };
+  }, [user]);
 
-  // Cargar proveedores con orden alfabético
-  const fetchSuppliers = async () => {
-    const userId = await getUserId();
-    if (!userId) {
-      console.log('No user ID found, skipping suppliers fetch');
-      return;
+  // Load suppliers with error handling
+  const fetchSuppliers = useCallback(async () => {
+    try {
+      const userId = await getUserId();
+      if (!userId) {
+        console.log('No user ID found, skipping suppliers fetch');
+        setSuppliers([]);
+        return;
+      }
+
+      console.log('Fetching suppliers for user:', userId);
+
+      const { data, error } = await supabase
+        .from('suppliers')
+        .select('*')
+        .eq('user_id', userId)
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching suppliers:', error);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los proveedores",
+          variant: "destructive",
+        });
+        setSuppliers([]);
+      } else {
+        console.log('Suppliers loaded:', data?.length || 0);
+        setSuppliers(data || []);
+      }
+    } catch (error) {
+      console.error('Exception fetching suppliers:', error);
+      setSuppliers([]);
     }
+  }, [getUserId, toast]);
 
-    console.log('Fetching suppliers for user:', userId);
+  // Load garments with error handling
+  const fetchGarments = useCallback(async () => {
+    try {
+      const userId = await getUserId();
+      if (!userId) {
+        console.log('No user ID found, skipping garments fetch');
+        setGarments([]);
+        return;
+      }
 
-    const { data, error } = await supabase
-      .from('suppliers')
-      .select('*')
-      .eq('user_id', userId)
-      .order('name', { ascending: true });
+      console.log('Fetching garments for user:', userId);
 
-    if (error) {
-      console.error('Error fetching suppliers:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los proveedores",
-        variant: "destructive",
-      });
-    } else {
-      console.log('Suppliers loaded:', data);
-      setSuppliers(data || []);
+      const { data, error } = await supabase
+        .from('garments')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching garments:', error);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar las prendas",
+          variant: "destructive",
+        });
+        setGarments([]);
+      } else {
+        console.log('Garments loaded:', data?.length || 0);
+        setGarments(data || []);
+      }
+    } catch (error) {
+      console.error('Exception fetching garments:', error);
+      setGarments([]);
     }
-  };
+  }, [getUserId, toast]);
 
-  // Cargar prendas ordenadas por fecha de creación (más reciente primero)
-  const fetchGarments = async () => {
-    const userId = await getUserId();
-    if (!userId) {
-      console.log('No user ID found, skipping garments fetch');
-      return;
-    }
-
-    console.log('Fetching garments for user:', userId);
-
-    const { data, error } = await supabase
-      .from('garments')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching garments:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las prendas",
-        variant: "destructive",
-      });
-    } else {
-      console.log('Garments loaded:', data);
-      setGarments(data || []);
-    }
-  };
-
+  // Load data when user changes
   useEffect(() => {
     if (user) {
       console.log('User found, loading data...');
       const loadData = async () => {
         setLoading(true);
-        await Promise.all([fetchSuppliers(), fetchGarments()]);
-        setLoading(false);
+        try {
+          await Promise.all([fetchSuppliers(), fetchGarments()]);
+        } catch (error) {
+          console.error('Error loading data:', error);
+        } finally {
+          setLoading(false);
+        }
       };
       loadData();
     } else {
@@ -121,127 +147,168 @@ export const useSupabaseData = () => {
       setGarments([]);
       setLoading(false);
     }
-  }, [user]);
+  }, [user, fetchSuppliers, fetchGarments]);
 
   const addSupplier = async (supplierData: SupplierFormData) => {
-    const userId = await getUserId();
-    if (!userId) return null;
+    try {
+      const userId = await getUserId();
+      if (!userId) {
+        toast({
+          title: "Error",
+          description: "Usuario no encontrado",
+          variant: "destructive",
+        });
+        return null;
+      }
 
-    console.log('Adding supplier:', supplierData);
+      console.log('Adding supplier:', supplierData);
 
-    const { data, error } = await supabase
-      .from('suppliers')
-      .insert({
-        ...supplierData,
-        user_id: userId,
-      })
-      .select()
-      .single();
+      const { data, error } = await supabase
+        .from('suppliers')
+        .insert({
+          ...supplierData,
+          user_id: userId,
+        })
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error adding supplier:', error);
+      if (error) {
+        console.error('Error adding supplier:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo agregar el proveedor",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      // Update local state
+      setSuppliers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+      toast({
+        title: "Éxito",
+        description: "Proveedor agregado correctamente",
+      });
+      return data;
+    } catch (error) {
+      console.error('Exception adding supplier:', error);
       toast({
         title: "Error",
-        description: "No se pudo agregar el proveedor",
+        description: "Error inesperado al agregar proveedor",
         variant: "destructive",
       });
       return null;
     }
-
-    // Actualizar la lista ordenada alfabéticamente
-    setSuppliers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
-    toast({
-      title: "Éxito",
-      description: "Proveedor agregado correctamente",
-    });
-    return data;
   };
 
   const addGarment = async (supplierId: string, garmentData: GarmentFormData) => {
-    const userId = await getUserId();
-    if (!userId) return;
+    try {
+      const userId = await getUserId();
+      if (!userId) {
+        toast({
+          title: "Error",
+          description: "Usuario no encontrado",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    console.log('Adding garment:', garmentData);
+      console.log('Adding garment:', garmentData);
 
-    const { data, error } = await supabase
-      .from('garments')
-      .insert({
-        ...garmentData,
-        supplier_id: supplierId,
-        user_id: userId,
-        is_sold: false,
-        payment_status: 'not_available',
-      })
-      .select()
-      .single();
+      const { data, error } = await supabase
+        .from('garments')
+        .insert({
+          ...garmentData,
+          supplier_id: supplierId,
+          user_id: userId,
+          is_sold: false,
+          payment_status: 'not_available',
+        })
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error adding garment:', error);
+      if (error) {
+        console.error('Error adding garment:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo agregar la prenda",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update local state
+      setGarments(prev => [data, ...prev]);
+      toast({
+        title: "Éxito",
+        description: "Prenda agregada correctamente",
+      });
+    } catch (error) {
+      console.error('Exception adding garment:', error);
       toast({
         title: "Error",
-        description: "No se pudo agregar la prenda",
+        description: "Error inesperado al agregar prenda",
         variant: "destructive",
       });
-      return;
     }
-
-    // Insertar al principio de la lista (más reciente primero)
-    setGarments(prev => [data, ...prev]);
-    toast({
-      title: "Éxito",
-      description: "Prenda agregada correctamente",
-    });
   };
 
   const markAsSold = async (garmentId: string, garmentName: string) => {
-    // Obtener la prenda y el proveedor para el WhatsApp
-    const garment = garments.find(g => g.id === garmentId);
-    const supplier = suppliers.find(s => s.id === garment?.supplier_id);
+    try {
+      // Get garment and supplier info for WhatsApp
+      const garment = garments.find(g => g.id === garmentId);
+      const supplier = suppliers.find(s => s.id === garment?.supplier_id);
 
-    const { data, error } = await supabase
-      .from('garments')
-      .update({ 
-        is_sold: true, 
-        payment_status: 'pending',
-        sold_at: new Date().toISOString()
-      })
-      .eq('id', garmentId)
-      .select()
-      .single();
+      const { data, error } = await supabase
+        .from('garments')
+        .update({ 
+          is_sold: true, 
+          payment_status: 'pending',
+          sold_at: new Date().toISOString()
+        })
+        .eq('id', garmentId)
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error marking as sold:', error);
+      if (error) {
+        console.error('Error marking as sold:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo marcar como vendida",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update local state
+      setGarments(prev => prev.map(g => g.id === garmentId ? data : g));
+
+      // Send WhatsApp message
+      if (supplier && garment) {
+        sendWhatsAppMessage(supplier, garment);
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Prenda marcada como vendida",
+      });
+    } catch (error) {
+      console.error('Exception marking as sold:', error);
       toast({
         title: "Error",
-        description: "No se pudo marcar como vendida",
+        description: "Error inesperado al marcar como vendida",
         variant: "destructive",
       });
-      return;
     }
-
-    setGarments(prev => prev.map(garment => 
-      garment.id === garmentId ? data : garment
-    ));
-
-    // Enviar WhatsApp si tenemos los datos del proveedor
-    if (supplier && garment) {
-      sendWhatsAppMessage(supplier, garment);
-    }
-
-    toast({
-      title: "Éxito",
-      description: "Prenda marcada como vendida",
-    });
   };
 
   const sendWhatsAppMessage = (supplier: Supplier, garment: any) => {
-    // Limpiar el número de teléfono, eliminando espacios y agregando el código de país
-    const cleanPhone = supplier.phone.replace(/\s/g, '');
-    const fullPhone = `54${cleanPhone}`;
-    
-    const supplierName = `${supplier.name} ${supplier.surname}`;
-    
-    const message = `¡Hola ${supplierName}! 👋
+    try {
+      const cleanPhone = supplier.phone.replace(/\s/g, '');
+      const fullPhone = `54${cleanPhone}`;
+      
+      const supplierName = `${supplier.name} ${supplier.surname}`;
+      
+      const message = `¡Hola ${supplierName}! 👋
 
 Tu prenda "${garment.name}" se ha vendido exitosamente. 
 
@@ -249,60 +316,79 @@ Tu prenda "${garment.name}" se ha vendido exitosamente.
 
 ¡Gracias por confiar en nosotros!`;
 
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${fullPhone}?text=${encodedMessage}`;
-    
-    window.open(whatsappUrl, '_blank');
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/${fullPhone}?text=${encodedMessage}`;
+      
+      window.open(whatsappUrl, '_blank');
+    } catch (error) {
+      console.error('Error sending WhatsApp message:', error);
+    }
   };
 
   const markAsPaid = async (garmentId: string) => {
-    const { data, error } = await supabase
-      .from('garments')
-      .update({ payment_status: 'paid' })
-      .eq('id', garmentId)
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('garments')
+        .update({ payment_status: 'paid' })
+        .eq('id', garmentId)
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error marking as paid:', error);
+      if (error) {
+        console.error('Error marking as paid:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo marcar como pagada",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setGarments(prev => prev.map(g => g.id === garmentId ? data : g));
+      toast({
+        title: "Éxito",
+        description: "Pago registrado correctamente",
+      });
+    } catch (error) {
+      console.error('Exception marking as paid:', error);
       toast({
         title: "Error",
-        description: "No se pudo marcar como pagada",
+        description: "Error inesperado al registrar pago",
         variant: "destructive",
       });
-      return;
     }
-
-    setGarments(prev => prev.map(garment => 
-      garment.id === garmentId ? data : garment
-    ));
-    toast({
-      title: "Éxito",
-      description: "Pago registrado correctamente",
-    });
   };
 
   const deleteGarment = async (garmentId: string) => {
-    const { error } = await supabase
-      .from('garments')
-      .delete()
-      .eq('id', garmentId);
+    try {
+      const { error } = await supabase
+        .from('garments')
+        .delete()
+        .eq('id', garmentId);
 
-    if (error) {
-      console.error('Error deleting garment:', error);
+      if (error) {
+        console.error('Error deleting garment:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo eliminar la prenda",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setGarments(prev => prev.filter(g => g.id !== garmentId));
+      toast({
+        title: "Éxito",
+        description: "Prenda eliminada correctamente",
+      });
+    } catch (error) {
+      console.error('Exception deleting garment:', error);
       toast({
         title: "Error",
-        description: "No se pudo eliminar la prenda",
+        description: "Error inesperado al eliminar prenda",
         variant: "destructive",
       });
-      return;
     }
-
-    setGarments(prev => prev.filter(garment => garment.id !== garmentId));
-    toast({
-      title: "Éxito",
-      description: "Prenda eliminada correctamente",
-    });
   };
 
   const getGarmentsBySupplier = (supplierId: string) => {
