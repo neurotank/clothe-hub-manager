@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
-  const [email, setEmail] = useState('admin@consignapp.com');
+  const [email, setEmail] = useState('admin@stockmanager.com');
   const [password, setPassword] = useState('password123');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -57,7 +57,7 @@ const Login = () => {
         console.log('Login successful, user data:', data.user);
         toast({
           title: "Login exitoso",
-          description: "Bienvenido a ConsignApp",
+          description: "Bienvenido a StockManager",
         });
       }
     } catch (error) {
@@ -81,7 +81,7 @@ const Login = () => {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-center">ConsignApp</CardTitle>
+          <CardTitle className="text-center">StockManager</CardTitle>
           <p className="text-center text-gray-600">Inicia sesión para continuar</p>
         </CardHeader>
         <CardContent>
@@ -94,7 +94,7 @@ const Login = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@consignapp.com"
+                placeholder="admin@stockmanager.com"
                 required
               />
             </div>
@@ -129,11 +129,11 @@ const Login = () => {
                 type="button"
                 variant="outline"
                 className="w-full text-left justify-start"
-                onClick={() => setCredentials('admin@consignapp.com', 'password123')}
+                onClick={() => setCredentials('admin@stockmanager.com', 'password123')}
               >
                 <div className="flex flex-col items-start">
                   <span className="font-medium">Admin</span>
-                  <span className="text-xs text-gray-500">admin@consignapp.com / password123</span>
+                  <span className="text-xs text-gray-500">admin@stockmanager.com / password123</span>
                 </div>
               </Button>
               
@@ -141,11 +141,11 @@ const Login = () => {
                 type="button"
                 variant="outline"
                 className="w-full text-left justify-start"
-                onClick={() => setCredentials('vendedor1@consignapp.com', 'password123')}
+                onClick={() => setCredentials('vendedor1@stockmanager.com', 'password123')}
               >
                 <div className="flex flex-col items-start">
                   <span className="font-medium">Vendedor 1</span>
-                  <span className="text-xs text-gray-500">vendedor1@consignapp.com / password123</span>
+                  <span className="text-xs text-gray-500">vendedor1@stockmanager.com / password123</span>
                 </div>
               </Button>
               
@@ -153,11 +153,11 @@ const Login = () => {
                 type="button"
                 variant="outline"
                 className="w-full text-left justify-start"
-                onClick={() => setCredentials('vendedor2@consignapp.com', 'password123')}
+                onClick={() => setCredentials('vendedor2@stockmanager.com', 'password123')}
               >
                 <div className="flex flex-col items-start">
                   <span className="font-medium">Vendedor 2</span>
-                  <span className="text-xs text-gray-500">vendedor2@consignapp.com / password123</span>
+                  <span className="text-xs text-gray-500">vendedor2@stockmanager.com / password123</span>
                 </div>
               </Button>
             </div>
