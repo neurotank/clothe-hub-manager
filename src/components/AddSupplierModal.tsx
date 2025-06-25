@@ -1,131 +1,112 @@
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { SupplierFormData } from '../types';
-
-const phoneRegex = /^\d{3} \d{7}$/;
-
-const supplierSchema = z.object({
-  name: z.string().min(1, 'El nombre es requerido'),
-  surname: z.string().min(1, 'El apellido es requerido'),
-  phone: z.string()
-    .min(1, 'El teléfono es requerido')
-    .regex(phoneRegex, 'El formato debe ser: 381 4743147 (código de área + espacio + 7 dígitos)'),
-});
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useSupabaseData } from '../hooks/useSupabaseData';
 
 interface AddSupplierModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSupplierAdd: (data: SupplierFormData) => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
-  open,
-  onOpenChange,
-  onSupplierAdd
-}) => {
-  const form = useForm<SupplierFormData>({
-    resolver: zodResolver(supplierSchema),
-    defaultValues: {
-      name: '',
-      surname: '',
-      phone: '',
-    },
+const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onClose }) => {
+  const { addSupplier } = useSupabaseData();
+  const [formData, setFormData] = useState({
+    name: '',
+    surname: '',
+    phone: '',
   });
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (data: SupplierFormData) => {
-    onSupplierAdd(data);
-    form.reset();
-    onOpenChange(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim() || !formData.phone.trim()) {
+      return;
+    }
+
+    setLoading(true);
+    const result = await addSupplier(formData);
+    
+    if (result) {
+      setFormData({ name: '', surname: '', phone: '' });
+      onClose();
+    }
+    setLoading(false);
+  };
+
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleClose = () => {
+    setFormData({ name: '', surname: '', phone: '' });
+    onClose();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Agregar Nuevo Proveedor</DialogTitle>
         </DialogHeader>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nombre</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nombre del proveedor" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name">Nombre *</Label>
+            <Input
+              id="name"
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
+              placeholder="Ingresa el nombre"
+              required
             />
-            
-            <FormField
-              control={form.control}
-              name="surname"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Apellido</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Apellido del proveedor" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          </div>
+
+          <div>
+            <Label htmlFor="surname">Apellido</Label>
+            <Input
+              id="surname"
+              type="text"
+              value={formData.surname}
+              onChange={(e) => handleInputChange('surname', e.target.value)}
+              placeholder="Ingresa el apellido"
             />
-            
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Teléfono</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="381 4743147" 
-                      {...field}
-                      maxLength={11}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                  <p className="text-xs text-gray-500">
-                    Formato: código de área + espacio + 7 dígitos
-                  </p>
-                </FormItem>
-              )}
+          </div>
+
+          <div>
+            <Label htmlFor="phone">Teléfono *</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
+              placeholder="Ingresa el número de teléfono"
+              required
             />
-            
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                Agregar Proveedor
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={loading}
+            >
+              {loading ? 'Agregando...' : 'Agregar Proveedor'}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

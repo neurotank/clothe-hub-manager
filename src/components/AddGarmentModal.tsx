@@ -1,175 +1,154 @@
 
 import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Plus } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { GarmentFormData } from '../types';
+import { useSupabaseData } from '../hooks/useSupabaseData';
 
 interface AddGarmentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
   supplierId: string;
-  onAddGarment: (supplierId: string, garmentData: GarmentFormData) => void;
 }
 
-const AddGarmentModal: React.FC<AddGarmentModalProps> = ({ supplierId, onAddGarment }) => {
-  const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState<GarmentFormData>({
-    code: '',
+const AddGarmentModal: React.FC<AddGarmentModalProps> = ({ isOpen, onClose, supplierId }) => {
+  const { addGarment } = useSupabaseData();
+  const [formData, setFormData] = useState({
     name: '',
+    code: '',
     size: '',
-    purchase_price: 0,
-    sale_price: 0,
+    purchase_price: '',
+    sale_price: '',
   });
-  
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.code || !formData.name || !formData.size || formData.purchase_price <= 0 || formData.sale_price <= 0) {
-      toast({
-        title: "Error",
-        description: "Por favor complete todos los campos correctamente",
-        variant: "destructive",
-      });
+    if (!formData.name.trim() || !formData.code.trim() || !formData.size.trim() ||
+        !formData.purchase_price || !formData.sale_price) {
       return;
     }
 
-    if (formData.sale_price <= formData.purchase_price) {
-      toast({
-        title: "Error",
-        description: "El precio de venta debe ser mayor al precio de compra",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    onAddGarment(supplierId, formData);
+    setLoading(true);
+    await addGarment(supplierId, {
+      ...formData,
+      purchase_price: parseFloat(formData.purchase_price),
+      sale_price: parseFloat(formData.sale_price),
+    });
     
-    toast({
-      title: "Prenda agregada",
-      description: "La prenda se agregó correctamente al inventario",
-    });
-
-    // Resetear formulario y cerrar modal
     setFormData({
-      code: '',
       name: '',
+      code: '',
       size: '',
-      purchase_price: 0,
-      sale_price: 0,
+      purchase_price: '',
+      sale_price: '',
     });
-    setOpen(false);
+    onClose();
+    setLoading(false);
   };
 
-  const handleInputChange = (field: keyof GarmentFormData, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleClose = () => {
+    setFormData({
+      name: '',
+      code: '',
+      size: '',
+      purchase_price: '',
+      sale_price: '',
+    });
+    onClose();
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-green-600 hover:bg-green-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Agregar Prenda
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Agregar Nueva Prenda</DialogTitle>
-          <DialogDescription>
-            Complete los datos de la nueva prenda en consignación
-          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="code">Código</Label>
-              <Input
-                id="code"
-                value={formData.code}
-                onChange={(e) => handleInputChange('code', e.target.value)}
-                placeholder="Ej: REM001"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="size">Talle</Label>
-              <Input
-                id="size"
-                value={formData.size}
-                onChange={(e) => handleInputChange('size', e.target.value)}
-                placeholder="Ej: M, L, 32"
-                required
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="name">Nombre de la prenda</Label>
+          <div>
+            <Label htmlFor="name">Nombre *</Label>
             <Input
               id="name"
+              type="text"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="Ej: Remera básica blanca"
+              placeholder="Nombre de la prenda"
               required
             />
           </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="purchase_price">Precio de Compra ($)</Label>
-              <Input
-                id="purchase_price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.purchase_price || ''}
-                onChange={(e) => handleInputChange('purchase_price', parseFloat(e.target.value) || 0)}
-                placeholder="0.00"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="sale_price">Precio de Venta ($)</Label>
-              <Input
-                id="sale_price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.sale_price || ''}
-                onChange={(e) => handleInputChange('sale_price', parseFloat(e.target.value) || 0)}
-                placeholder="0.00"
-                required
-              />
-            </div>
+
+          <div>
+            <Label htmlFor="code">Código *</Label>
+            <Input
+              id="code"
+              type="text"
+              value={formData.code}
+              onChange={(e) => handleInputChange('code', e.target.value)}
+              placeholder="Código de la prenda"
+              required
+            />
           </div>
-          
+
+          <div>
+            <Label htmlFor="size">Talla *</Label>
+            <Input
+              id="size"
+              type="text"
+              value={formData.size}
+              onChange={(e) => handleInputChange('size', e.target.value)}
+              placeholder="Talla"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="purchase_price">Precio de Compra *</Label>
+            <Input
+              id="purchase_price"
+              type="number"
+              step="0.01"
+              value={formData.purchase_price}
+              onChange={(e) => handleInputChange('purchase_price', e.target.value)}
+              placeholder="0.00"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="sale_price">Precio de Venta *</Label>
+            <Input
+              id="sale_price"
+              type="number"
+              step="0.01"
+              value={formData.sale_price}
+              onChange={(e) => handleInputChange('sale_price', e.target.value)}
+              placeholder="0.00"
+              required
+            />
+          </div>
+
           <div className="flex justify-end space-x-2 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setOpen(false)}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={loading}
             >
               Cancelar
             </Button>
-            <Button type="submit" className="bg-green-600 hover:bg-green-700">
-              Agregar Prenda
+            <Button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={loading}
+            >
+              {loading ? 'Agregando...' : 'Agregar Prenda'}
             </Button>
           </div>
         </form>
