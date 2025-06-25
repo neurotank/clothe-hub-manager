@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('admin@stockmanager.com');
-  const [password, setPassword] = useState('password123');
+  const [password, setPassword] = useState('administrador123');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -107,7 +107,7 @@ const Login = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="password123"
+                placeholder="administrador123"
                 required
               />
             </div>
@@ -141,11 +141,11 @@ const Login = () => {
                 type="button"
                 variant="outline"
                 className="w-full text-left justify-start"
-                onClick={() => setCredentials('vendedor1@stockmanager.com', 'password123')}
+                onClick={() => setCredentials('vendedor1@stockmanager.com', 'vendedor123')}
               >
                 <div className="flex flex-col items-start">
                   <span className="font-medium">Vendedor 1</span>
-                  <span className="text-xs text-gray-500">vendedor1@stockmanager.com / password123</span>
+                  <span className="text-xs text-gray-500">vendedor1@stockmanager.com / vendedor123</span>
                 </div>
               </Button>
               
@@ -153,11 +153,11 @@ const Login = () => {
                 type="button"
                 variant="outline"
                 className="w-full text-left justify-start"
-                onClick={() => setCredentials('vendedor2@stockmanager.com', 'password123')}
+                onClick={() => setCredentials('vendedor2@stockmanager.com', 'vendedor456')}
               >
                 <div className="flex flex-col items-start">
                   <span className="font-medium">Vendedor 2</span>
-                  <span className="text-xs text-gray-500">vendedor2@stockmanager.com / password123</span>
+                  <span className="text-xs text-gray-500">vendedor2@stockmanager.com / vendedor456</span>
                 </div>
               </Button>
             </div>
