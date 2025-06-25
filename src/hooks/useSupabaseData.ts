@@ -112,10 +112,10 @@ export const useSupabaseData = () => {
     }
   }, [getUserId, toast]);
 
-  // Load data when user changes
+  // Load initial data
   useEffect(() => {
     if (user) {
-      console.log('User found, loading data...');
+      console.log('User found, loading initial data...');
       const loadData = async () => {
         setLoading(true);
         try {
@@ -133,21 +133,17 @@ export const useSupabaseData = () => {
       setGarments([]);
       setLoading(false);
     }
-  }, [user, fetchSuppliers, fetchGarments]);
+  }, [user?.id]); // Only depend on user.id
 
-  // Set up real-time subscriptions - separate effect with stable dependencies
+  // Set up real-time subscriptions with simplified approach
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
-    console.log('Setting up real-time subscriptions');
+    console.log('Setting up real-time subscriptions for user:', user.id);
 
-    // Create unique channel names to avoid conflicts
-    const suppliersChannelName = `suppliers-changes-${user.id}`;
-    const garmentsChannelName = `garments-changes-${user.id}`;
-
-    // Suppliers real-time subscription
-    const suppliersChannel = supabase
-      .channel(suppliersChannelName)
+    // Create a single channel for all changes
+    const channel = supabase
+      .channel(`db-changes-${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -155,16 +151,21 @@ export const useSupabaseData = () => {
           schema: 'public',
           table: 'suppliers'
         },
-        (payload) => {
+        async (payload) => {
           console.log('Suppliers real-time update:', payload);
-          fetchSuppliers();
+          // Re-fetch suppliers data
+          try {
+            const { data } = await supabase
+              .from('suppliers')
+              .select('*')
+              .eq('user_id', user.id)
+              .order('name', { ascending: true });
+            if (data) setSuppliers(data);
+          } catch (error) {
+            console.error('Error in suppliers real-time update:', error);
+          }
         }
       )
-      .subscribe();
-
-    // Garments real-time subscription
-    const garmentsChannel = supabase
-      .channel(garmentsChannelName)
       .on(
         'postgres_changes',
         {
@@ -172,19 +173,28 @@ export const useSupabaseData = () => {
           schema: 'public',
           table: 'garments'
         },
-        (payload) => {
+        async (payload) => {
           console.log('Garments real-time update:', payload);
-          fetchGarments();
+          // Re-fetch garments data
+          try {
+            const { data } = await supabase
+              .from('garments')
+              .select('*')
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false });
+            if (data) setGarments(data);
+          } catch (error) {
+            console.error('Error in garments real-time update:', error);
+          }
         }
       )
       .subscribe();
 
     return () => {
-      console.log('Cleaning up real-time subscriptions');
-      supabase.removeChannel(suppliersChannel);
-      supabase.removeChannel(garmentsChannel);
+      console.log('Cleaning up real-time subscription');
+      supabase.removeChannel(channel);
     };
-  }, [user?.id]); // Only depend on user.id to avoid recreating channels
+  }, [user?.id]);
 
   const addSupplier = async (supplierData: SupplierFormData) => {
     try {
