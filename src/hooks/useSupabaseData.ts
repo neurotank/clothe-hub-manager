@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Supplier, Garment, GarmentFormData, SupplierFormData } from '../types';
@@ -10,6 +10,8 @@ export const useSupabaseData = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [garments, setGarments] = useState<Garment[]>([]);
   const [loading, setLoading] = useState(true);
+  const channelRef = useRef<any>(null);
+  const isSubscribedRef = useRef(false);
 
   // Get user ID from users table
   const getUserId = useCallback(async () => {
@@ -133,68 +135,96 @@ export const useSupabaseData = () => {
       setGarments([]);
       setLoading(false);
     }
-  }, [user?.id]); // Only depend on user.id
+  }, [user?.id, fetchSuppliers, fetchGarments]);
 
-  // Set up real-time subscriptions with simplified approach
+  // Set up real-time subscriptions with proper cleanup
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || isSubscribedRef.current) return;
 
     console.log('Setting up real-time subscriptions for user:', user.id);
 
-    // Create a single channel for all changes
-    const channel = supabase
-      .channel(`db-changes-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'suppliers'
-        },
-        async (payload) => {
-          console.log('Suppliers real-time update:', payload);
-          // Re-fetch suppliers data
-          try {
-            const { data } = await supabase
-              .from('suppliers')
-              .select('*')
-              .eq('user_id', user.id)
-              .order('name', { ascending: true });
-            if (data) setSuppliers(data);
-          } catch (error) {
-            console.error('Error in suppliers real-time update:', error);
-          }
+    const setupRealtimeSubscription = async () => {
+      try {
+        const userId = await getUserId();
+        if (!userId) return;
+
+        // Clean up any existing channel
+        if (channelRef.current) {
+          console.log('Cleaning up existing channel');
+          await supabase.removeChannel(channelRef.current);
+          channelRef.current = null;
         }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'garments'
-        },
-        async (payload) => {
-          console.log('Garments real-time update:', payload);
-          // Re-fetch garments data
-          try {
-            const { data } = await supabase
-              .from('garments')
-              .select('*')
-              .eq('user_id', user.id)
-              .order('created_at', { ascending: false });
-            if (data) setGarments(data);
-          } catch (error) {
-            console.error('Error in garments real-time update:', error);
-          }
-        }
-      )
-      .subscribe();
+
+        // Create a new channel
+        const channel = supabase.channel(`db-changes-${userId}-${Date.now()}`);
+        
+        channel
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'suppliers'
+            },
+            async (payload) => {
+              console.log('Suppliers real-time update:', payload);
+              try {
+                const { data } = await supabase
+                  .from('suppliers')
+                  .select('*')
+                  .eq('user_id', userId)
+                  .order('name', { ascending: true });
+                if (data) setSuppliers(data);
+              } catch (error) {
+                console.error('Error in suppliers real-time update:', error);
+              }
+            }
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'garments'
+            },
+            async (payload) => {
+              console.log('Garments real-time update:', payload);
+              try {
+                const { data } = await supabase
+                  .from('garments')
+                  .select('*')
+                  .eq('user_id', userId)
+                  .order('created_at', { ascending: false });
+                if (data) setGarments(data);
+              } catch (error) {
+                console.error('Error in garments real-time update:', error);
+              }
+            }
+          )
+          .subscribe((status) => {
+            console.log('Subscription status:', status);
+            if (status === 'SUBSCRIBED') {
+              isSubscribedRef.current = true;
+            }
+          });
+
+        channelRef.current = channel;
+      } catch (error) {
+        console.error('Error setting up real-time subscription:', error);
+      }
+    };
+
+    setupRealtimeSubscription();
 
     return () => {
       console.log('Cleaning up real-time subscription');
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      isSubscribedRef.current = false;
     };
-  }, [user?.id]);
+  }, [user?.id, getUserId]);
 
   const addSupplier = async (supplierData: SupplierFormData) => {
     try {
