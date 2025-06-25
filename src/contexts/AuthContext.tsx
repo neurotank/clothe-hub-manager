@@ -18,12 +18,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('Setting up auth state listener...');
+    
     // Configurar listener de cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state change:', event, session);
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Si hay una nueva sesión, actualizar el auth_user_id en la tabla users
+        if (session?.user && event === 'SIGNED_IN') {
+          console.log('Updating user auth_user_id:', session.user.id);
+          const { error } = await supabase
+            .from('users')
+            .update({ auth_user_id: session.user.id })
+            .eq('email', session.user.email);
+          
+          if (error) {
+            console.error('Error updating auth_user_id:', error);
+          } else {
+            console.log('Successfully updated auth_user_id');
+          }
+        }
+        
         setLoading(false);
       }
     );
@@ -40,6 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = async () => {
+    console.log('Signing out...');
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Sign out error:', error);

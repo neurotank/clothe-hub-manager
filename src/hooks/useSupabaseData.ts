@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,7 +13,12 @@ export const useSupabaseData = () => {
 
   // Obtener el user_id de la tabla users basado en el auth_user_id
   const getUserId = async () => {
-    if (!user) return null;
+    if (!user) {
+      console.log('No user found');
+      return null;
+    }
+    
+    console.log('Getting user ID for auth user:', user.id);
     
     const { data, error } = await supabase
       .from('users')
@@ -24,16 +28,35 @@ export const useSupabaseData = () => {
     
     if (error) {
       console.error('Error getting user ID:', error);
-      return null;
+      // Si no se encuentra el usuario, intentar buscarlo por email
+      const { data: emailData, error: emailError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', user.email)
+        .single();
+      
+      if (emailError) {
+        console.error('Error getting user by email:', emailError);
+        return null;
+      }
+      
+      console.log('Found user by email:', emailData);
+      return emailData?.id;
     }
     
+    console.log('Found user by auth_user_id:', data);
     return data?.id;
   };
 
   // Cargar proveedores
   const fetchSuppliers = async () => {
     const userId = await getUserId();
-    if (!userId) return;
+    if (!userId) {
+      console.log('No user ID found, skipping suppliers fetch');
+      return;
+    }
+
+    console.log('Fetching suppliers for user:', userId);
 
     const { data, error } = await supabase
       .from('suppliers')
@@ -48,6 +71,7 @@ export const useSupabaseData = () => {
         variant: "destructive",
       });
     } else {
+      console.log('Suppliers loaded:', data);
       setSuppliers(data || []);
     }
   };
@@ -55,7 +79,12 @@ export const useSupabaseData = () => {
   // Cargar prendas
   const fetchGarments = async () => {
     const userId = await getUserId();
-    if (!userId) return;
+    if (!userId) {
+      console.log('No user ID found, skipping garments fetch');
+      return;
+    }
+
+    console.log('Fetching garments for user:', userId);
 
     const { data, error } = await supabase
       .from('garments')
@@ -70,12 +99,14 @@ export const useSupabaseData = () => {
         variant: "destructive",
       });
     } else {
+      console.log('Garments loaded:', data);
       setGarments(data || []);
     }
   };
 
   useEffect(() => {
     if (user) {
+      console.log('User found, loading data...');
       const loadData = async () => {
         setLoading(true);
         await Promise.all([fetchSuppliers(), fetchGarments()]);
@@ -83,6 +114,7 @@ export const useSupabaseData = () => {
       };
       loadData();
     } else {
+      console.log('No user, clearing data...');
       setSuppliers([]);
       setGarments([]);
       setLoading(false);
@@ -92,6 +124,8 @@ export const useSupabaseData = () => {
   const addSupplier = async (supplierData: SupplierFormData) => {
     const userId = await getUserId();
     if (!userId) return null;
+
+    console.log('Adding supplier:', supplierData);
 
     const { data, error } = await supabase
       .from('suppliers')
@@ -123,6 +157,8 @@ export const useSupabaseData = () => {
   const addGarment = async (supplierId: string, garmentData: GarmentFormData) => {
     const userId = await getUserId();
     if (!userId) return;
+
+    console.log('Adding garment:', garmentData);
 
     const { data, error } = await supabase
       .from('garments')
