@@ -18,44 +18,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('Setting up auth state listener...');
+    console.log('AuthProvider: Setting up auth state listener...');
     
-    // Get initial session first
-    const getInitialSession = async () => {
+    // Get initial session
+    const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Error getting initial session:', error);
+          console.error('AuthProvider: Error getting initial session:', error);
         } else {
-          console.log('Initial session loaded:', !!session);
+          console.log('AuthProvider: Initial session loaded:', !!session);
           setSession(session);
           setUser(session?.user ?? null);
         }
       } catch (error) {
-        console.error('Exception getting initial session:', error);
+        console.error('AuthProvider: Exception getting initial session:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    getInitialSession();
+    initializeAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session ? 'session exists' : 'no session');
+        console.log('AuthProvider: Auth state change:', event, session ? 'session exists' : 'no session');
         
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Only update user profile on successful sign in
+        // Handle user profile creation/update
         if (session?.user && event === 'SIGNED_IN') {
-          // Use setTimeout to avoid blocking the auth state change
           setTimeout(async () => {
             try {
-              console.log('Updating user profile for:', session.user.id);
+              console.log('AuthProvider: Updating user profile for:', session.user.id);
               const { error } = await supabase
                 .from('users')
                 .upsert({ 
@@ -67,12 +66,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 });
               
               if (error) {
-                console.error('Error updating user profile:', error);
+                console.error('AuthProvider: Error updating user profile:', error);
               } else {
-                console.log('User profile updated successfully');
+                console.log('AuthProvider: User profile updated successfully');
               }
             } catch (error) {
-              console.error('Exception updating user profile:', error);
+              console.error('AuthProvider: Exception updating user profile:', error);
             }
           }, 100);
         }
@@ -80,26 +79,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     return () => {
-      console.log('Cleaning up auth subscription');
+      console.log('AuthProvider: Cleaning up auth subscription');
       subscription.unsubscribe();
     };
   }, []);
 
   const signOut = async () => {
-    console.log('Signing out...');
+    console.log('AuthProvider: Signing out...');
     setLoading(true);
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('Sign out error:', error);
+        console.error('AuthProvider: Sign out error:', error);
       } else {
-        console.log('Successfully signed out');
-        // Clear state immediately
+        console.log('AuthProvider: Successfully signed out');
         setSession(null);
         setUser(null);
       }
     } catch (error) {
-      console.error('Exception during sign out:', error);
+      console.error('AuthProvider: Exception during sign out:', error);
     } finally {
       setLoading(false);
     }
@@ -111,6 +109,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     signOut
   };
+
+  console.log('AuthProvider: Rendering with state - Loading:', loading, 'User:', !!user);
 
   return (
     <AuthContext.Provider value={value}>
