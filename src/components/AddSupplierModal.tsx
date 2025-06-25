@@ -22,11 +22,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { SupplierFormData } from '../types';
 
+const phoneRegex = /^\d{3} \d{7}$/;
+
 const supplierSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
-  phone: z.string().min(1, 'El teléfono es requerido'),
-  address: z.string().min(1, 'La dirección es requerida'),
-  email: z.string().email('Email inválido').min(1, 'El email es requerido'),
+  surname: z.string().min(1, 'El apellido es requerido'),
+  phone: z.string()
+    .min(1, 'El teléfono es requerido')
+    .regex(phoneRegex, 'El formato debe ser: 381 4743147 (código de área + espacio + 7 dígitos)'),
 });
 
 interface AddSupplierModalProps {
@@ -44,9 +47,8 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
       name: '',
+      surname: '',
       phone: '',
-      address: '',
-      email: '',
     },
   });
 
@@ -81,42 +83,35 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({
             
             <FormField
               control={form.control}
+              name="surname"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Apellido</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Apellido del proveedor" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
               name="phone"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Teléfono</FormLabel>
                   <FormControl>
-                    <Input placeholder="+34 666 123 456" {...field} />
+                    <Input 
+                      placeholder="381 4743147" 
+                      {...field}
+                      maxLength={11}
+                    />
                   </FormControl>
                   <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dirección</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Dirección completa" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="email@example.com" type="email" {...field} />
-                  </FormControl>
-                  <FormMessage />
+                  <p className="text-xs text-gray-500">
+                    Formato: código de área + espacio + 7 dígitos
+                  </p>
                 </FormItem>
               )}
             />

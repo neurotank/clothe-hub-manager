@@ -11,18 +11,6 @@ interface MonthFilterProps {
 const MonthFilter: React.FC<MonthFilterProps> = ({ selectedMonth, onMonthChange }) => {
   const months = [
     { value: 'all', label: 'Todos los meses' },
-    { value: '2024-01', label: 'Enero 2024' },
-    { value: '2024-02', label: 'Febrero 2024' },
-    { value: '2024-03', label: 'Marzo 2024' },
-    { value: '2024-04', label: 'Abril 2024' },
-    { value: '2024-05', label: 'Mayo 2024' },
-    { value: '2024-06', label: 'Junio 2024' },
-    { value: '2024-07', label: 'Julio 2024' },
-    { value: '2024-08', label: 'Agosto 2024' },
-    { value: '2024-09', label: 'Septiembre 2024' },
-    { value: '2024-10', label: 'Octubre 2024' },
-    { value: '2024-11', label: 'Noviembre 2024' },
-    { value: '2024-12', label: 'Diciembre 2024' },
     { value: '2025-01', label: 'Enero 2025' },
     { value: '2025-02', label: 'Febrero 2025' },
     { value: '2025-03', label: 'Marzo 2025' },
@@ -35,6 +23,18 @@ const MonthFilter: React.FC<MonthFilterProps> = ({ selectedMonth, onMonthChange 
     { value: '2025-10', label: 'Octubre 2025' },
     { value: '2025-11', label: 'Noviembre 2025' },
     { value: '2025-12', label: 'Diciembre 2025' },
+    { value: '2026-01', label: 'Enero 2026' },
+    { value: '2026-02', label: 'Febrero 2026' },
+    { value: '2026-03', label: 'Marzo 2026' },
+    { value: '2026-04', label: 'Abril 2026' },
+    { value: '2026-05', label: 'Mayo 2026' },
+    { value: '2026-06', label: 'Junio 2026' },
+    { value: '2026-07', label: 'Julio 2026' },
+    { value: '2026-08', label: 'Agosto 2026' },
+    { value: '2026-09', label: 'Septiembre 2026' },
+    { value: '2026-10', label: 'Octubre 2026' },
+    { value: '2026-11', label: 'Noviembre 2026' },
+    { value: '2026-12', label: 'Diciembre 2026' },
   ];
 
   return (

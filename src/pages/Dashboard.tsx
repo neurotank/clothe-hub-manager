@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,23 +16,64 @@ import { useToast } from '@/hooks/use-toast';
 import Header from '../components/Header';
 import SearchAndFilters from '../components/SearchAndFilters';
 import AddSupplierModal from '../components/AddSupplierModal';
-import { useDataStore } from '../hooks/useDataStore';
-import { SupplierFormData } from '../types';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '../contexts/AuthContext';
+import { Supplier, SupplierFormData, Garment } from '../types';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { suppliers, getGarmentsBySupplier, addSupplier } = useDataStore();
+  const { user } = useAuth();
   
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [garments, setGarments] = useState<Garment[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [supplierFilter, setSupplierFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
   const [showAddSupplierModal, setShowAddSupplierModal] = useState(false);
 
+  // Cargar suppliers
+  const loadSuppliers = async () => {
+    const { data, error } = await supabase
+      .from('suppliers')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) {
+      console.error('Error loading suppliers:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los proveedores",
+        variant: "destructive",
+      });
+    } else {
+      setSuppliers(data || []);
+    }
+  };
+
+  // Cargar prendas
+  const loadGarments = async () => {
+    const { data, error } = await supabase
+      .from('garments')
+      .select('*');
+
+    if (error) {
+      console.error('Error loading garments:', error);
+    } else {
+      setGarments(data || []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    Promise.all([loadSuppliers(), loadGarments()]);
+  }, []);
+
   // Filtrar proveedores basado en búsqueda
   const filteredSuppliers = useMemo(() => {
     return suppliers.filter(supplier => 
-      supplier.name.toLowerCase().includes(supplierFilter.toLowerCase())
+      `${supplier.name} ${supplier.surname}`.toLowerCase().includes(supplierFilter.toLowerCase())
     );
   }, [suppliers, supplierFilter]);
 
@@ -40,13 +81,49 @@ const Dashboard: React.FC = () => {
     navigate(`/supplier/${supplierId}`);
   };
 
-  const handleAddSupplier = (supplierData: SupplierFormData) => {
-    const newSupplier = addSupplier(supplierData);
-    toast({
-      title: "Proveedor agregado",
-      description: `${newSupplier.name} ha sido agregado exitosamente.`,
-    });
+  const handleAddSupplier = async (supplierData: SupplierFormData) => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('suppliers')
+      .insert({
+        ...supplierData,
+        user_id: user.id,
+        created_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error adding supplier:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo agregar el proveedor",
+        variant: "destructive",
+      });
+    } else {
+      setSuppliers(prev => [...prev, data]);
+      toast({
+        title: "Proveedor agregado",
+        description: `${data.name} ${data.surname} ha sido agregado exitosamente.`,
+      });
+    }
   };
+
+  const getGarmentsBySupplier = (supplierId: string) => {
+    return garments.filter(g => g.supplier_id === supplierId);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="text-center">Cargando...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -93,10 +170,7 @@ const Dashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {suppliers.reduce((acc, supplier) => {
-                  const garments = getGarmentsBySupplier(supplier.id);
-                  return acc + garments.filter(g => !g.is_sold).length;
-                }, 0)}
+                {garments.filter(g => !g.is_sold).length}
               </div>
             </CardContent>
           </Card>
@@ -107,10 +181,7 @@ const Dashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">
-                {suppliers.reduce((acc, supplier) => {
-                  const garments = getGarmentsBySupplier(supplier.id);
-                  return acc + garments.filter(g => g.is_sold).length;
-                }, 0)}
+                {garments.filter(g => g.is_sold).length}
               </div>
             </CardContent>
           </Card>
@@ -121,10 +192,7 @@ const Dashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-600">
-                {suppliers.reduce((acc, supplier) => {
-                  const garments = getGarmentsBySupplier(supplier.id);
-                  return acc + garments.filter(g => g.payment_status === 'pending').length;
-                }, 0)}
+                {garments.filter(g => g.payment_status === 'pending').length}
               </div>
             </CardContent>
           </Card>
@@ -148,24 +216,22 @@ const Dashboard: React.FC = () => {
                   <TableRow>
                     <TableHead>Nombre</TableHead>
                     <TableHead className="hidden sm:table-cell">Teléfono</TableHead>
-                    <TableHead className="hidden lg:table-cell">Dirección</TableHead>
-                    <TableHead className="hidden lg:table-cell">Email</TableHead>
                     <TableHead className="text-center">Prendas</TableHead>
                     <TableHead className="text-center">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredSuppliers.map((supplier) => {
-                    const garments = getGarmentsBySupplier(supplier.id);
-                    const availableGarments = garments.filter(g => !g.is_sold).length;
-                    const soldGarments = garments.filter(g => g.is_sold).length;
-                    const pendingPayments = garments.filter(g => g.payment_status === 'pending').length;
+                    const supplierGarments = getGarmentsBySupplier(supplier.id);
+                    const availableGarments = supplierGarments.filter(g => !g.is_sold).length;
+                    const soldGarments = supplierGarments.filter(g => g.is_sold).length;
+                    const pendingPayments = supplierGarments.filter(g => g.payment_status === 'pending').length;
                     
                     return (
                       <TableRow key={supplier.id} className="hover:bg-gray-50">
                         <TableCell className="font-medium">
                           <div>
-                            <div className="font-medium">{supplier.name}</div>
+                            <div className="font-medium">{supplier.name} {supplier.surname}</div>
                             <div className="sm:hidden text-xs text-gray-500">
                               {supplier.phone}
                             </div>
@@ -173,12 +239,6 @@ const Dashboard: React.FC = () => {
                         </TableCell>
                         <TableCell className="hidden sm:table-cell text-gray-600">
                           {supplier.phone}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-gray-600">
-                          {supplier.address}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-gray-600">
-                          {supplier.email}
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex flex-col items-center space-y-1">

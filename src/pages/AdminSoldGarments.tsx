@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -11,50 +11,97 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Header from '../components/Header';
-import SearchAndFilters from '../components/SearchAndFilters';
 import MonthFilter from '../components/MonthFilter';
-import { useDataStore } from '../hooks/useDataStore';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Supplier, Garment } from '../types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const AdminSoldGarments: React.FC = () => {
-  const { suppliers, getAllSoldGarments } = useDataStore();
-  const soldGarments = getAllSoldGarments();
-  
-  const [searchTerm, setSearchTerm] = useState('');
-  const [supplierFilter, setSupplierFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
+  const { toast } = useToast();
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [soldGarments, setSoldGarments] = useState<Garment[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState('all');
 
-  // Filtrar prendas vendidas
+  // Cargar datos
+  const loadData = async () => {
+    setLoading(true);
+    
+    // Cargar suppliers
+    const { data: suppliersData, error: suppliersError } = await supabase
+      .from('suppliers')
+      .select('*');
+
+    if (suppliersError) {
+      console.error('Error loading suppliers:', suppliersError);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los proveedores",
+        variant: "destructive",
+      });
+    } else {
+      setSuppliers(suppliersData || []);
+    }
+
+    // Cargar prendas vendidas
+    const { data: garmentsData, error: garmentsError } = await supabase
+      .from('garments')
+      .select('*')
+      .eq('is_sold', true)
+      .order('sold_at', { ascending: false });
+
+    if (garmentsError) {
+      console.error('Error loading sold garments:', garmentsError);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las prendas vendidas",
+        variant: "destructive",
+      });
+    } else {
+      setSoldGarments(garmentsData || []);
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // Filtrar prendas vendidas por mes
   const filteredGarments = useMemo(() => {
     return soldGarments.filter(garment => {
-      const supplier = suppliers.find(s => s.id === garment.supplier_id);
-      const supplierName = supplier?.name || '';
-      
-      const matchesSearch = 
-        garment.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        garment.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        supplierName.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesSupplier = supplierFilter === '' || 
-        supplierName.toLowerCase().includes(supplierFilter.toLowerCase());
-      
-      const matchesStatus = statusFilter === 'all' || 
-        (statusFilter === 'pending_payment' && garment.payment_status === 'pending') ||
-        (statusFilter === 'paid' && garment.payment_status === 'paid');
-      
       // Filtro por mes
       const matchesMonth = selectedMonth === 'all' || 
         (garment.sold_at && format(new Date(garment.sold_at), 'yyyy-MM') === selectedMonth);
       
-      return matchesSearch && matchesSupplier && matchesStatus && matchesMonth;
+      return matchesMonth;
     });
-  }, [soldGarments, suppliers, searchTerm, supplierFilter, statusFilter, selectedMonth]);
+  }, [soldGarments, selectedMonth]);
 
   const totalRevenue = filteredGarments.reduce((acc, garment) => acc + garment.sale_price, 0);
   const totalProfit = filteredGarments.reduce((acc, garment) => acc + (garment.sale_price - garment.purchase_price), 0);
   const pendingPayments = filteredGarments.filter(g => g.payment_status === 'pending').length;
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS'
+    }).format(price);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="text-center">Cargando...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -66,17 +113,7 @@ const AdminSoldGarments: React.FC = () => {
           <p className="text-gray-600">Vista completa de todas las prendas vendidas y sus pagos</p>
         </div>
 
-        <div className="mb-6 space-y-4">
-          <SearchAndFilters
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-            showSupplierFilter={true}
-            supplierFilter={supplierFilter}
-            onSupplierFilterChange={setSupplierFilter}
-          />
-          
+        <div className="mb-6">
           <MonthFilter
             selectedMonth={selectedMonth}
             onMonthChange={setSelectedMonth}
@@ -104,7 +141,7 @@ const AdminSoldGarments: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">€{totalRevenue}</div>
+              <div className="text-2xl font-bold text-green-600">{formatPrice(totalRevenue)}</div>
             </CardContent>
           </Card>
           
@@ -116,7 +153,7 @@ const AdminSoldGarments: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">€{totalProfit}</div>
+              <div className="text-2xl font-bold text-blue-600">{formatPrice(totalProfit)}</div>
             </CardContent>
           </Card>
           
@@ -171,25 +208,28 @@ const AdminSoldGarments: React.FC = () => {
                     const profit = garment.sale_price - garment.purchase_price;
                     
                     return (
-                      <TableRow key={garment.id} className="hover:bg-gray-50">
+                      <TableRow 
+                        key={garment.id} 
+                        className={`hover:bg-gray-50 ${garment.payment_status === 'paid' ? 'opacity-60' : ''}`}
+                      >
                         <TableCell className="font-medium">{garment.code}</TableCell>
                         <TableCell>
                           <div>
                             <div className="font-medium">{garment.name}</div>
                             <div className="lg:hidden text-xs text-gray-500">
-                              {supplier?.name}
+                              {supplier?.name} {supplier?.surname}
                             </div>
                           </div>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
-                          {supplier?.name}
+                          {supplier?.name} {supplier?.surname}
                         </TableCell>
                         <TableCell>{garment.size}</TableCell>
-                        <TableCell className="hidden sm:table-cell">€{garment.purchase_price}</TableCell>
-                        <TableCell className="font-medium">€{garment.sale_price}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{formatPrice(garment.purchase_price)}</TableCell>
+                        <TableCell className="font-medium">{formatPrice(garment.sale_price)}</TableCell>
                         <TableCell className="hidden md:table-cell">
                           <span className={profit > 0 ? 'text-green-600' : 'text-red-600'}>
-                            €{profit}
+                            {formatPrice(profit)}
                           </span>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
