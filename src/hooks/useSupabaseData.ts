@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -136,15 +135,19 @@ export const useSupabaseData = () => {
     }
   }, [user, fetchSuppliers, fetchGarments]);
 
-  // Set up real-time subscriptions
+  // Set up real-time subscriptions - separate effect with stable dependencies
   useEffect(() => {
     if (!user) return;
 
     console.log('Setting up real-time subscriptions');
 
+    // Create unique channel names to avoid conflicts
+    const suppliersChannelName = `suppliers-changes-${user.id}`;
+    const garmentsChannelName = `garments-changes-${user.id}`;
+
     // Suppliers real-time subscription
     const suppliersChannel = supabase
-      .channel('suppliers-changes')
+      .channel(suppliersChannelName)
       .on(
         'postgres_changes',
         {
@@ -161,7 +164,7 @@ export const useSupabaseData = () => {
 
     // Garments real-time subscription
     const garmentsChannel = supabase
-      .channel('garments-changes')
+      .channel(garmentsChannelName)
       .on(
         'postgres_changes',
         {
@@ -181,7 +184,7 @@ export const useSupabaseData = () => {
       supabase.removeChannel(suppliersChannel);
       supabase.removeChannel(garmentsChannel);
     };
-  }, [user, fetchSuppliers, fetchGarments]);
+  }, [user?.id]); // Only depend on user.id to avoid recreating channels
 
   const addSupplier = async (supplierData: SupplierFormData) => {
     try {
