@@ -113,6 +113,14 @@ const AdminDashboard = () => {
     setPaymentDialog({ open: false, garmentId: null, garmentName: '' });
   };
 
+  // Handler that properly handles the status filter change
+  const handleStatusFilterChange = (filter: 'all' | 'available' | 'sold' | 'pending_payment' | 'paid') => {
+    // Only accept valid admin filters for sold garments
+    if (filter === 'all' || filter === 'pending_payment' || filter === 'paid') {
+      setStatusFilter(filter);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -247,7 +255,7 @@ const AdminDashboard = () => {
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
                 statusFilter={statusFilter}
-                onStatusFilterChange={setStatusFilter}
+                onStatusFilterChange={handleStatusFilterChange}
                 searchPlaceholder="Buscar por prenda, talle, código o proveedor..."
               />
               
