@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -92,21 +91,15 @@ const Dashboard: React.FC = () => {
   };
 
   const handleAddSupplier = async (supplierData: SupplierFormData) => {
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "Usuario no autenticado",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
+      console.log('Adding supplier:', supplierData);
+      
       const { data, error } = await supabase
         .from('suppliers')
         .insert({
-          ...supplierData,
-          user_id: user.id,
+          name: supplierData.name,
+          surname: supplierData.surname,
+          phone: supplierData.phone,
           created_at: new Date().toISOString(),
         })
         .select()
@@ -120,7 +113,7 @@ const Dashboard: React.FC = () => {
           variant: "destructive",
         });
       } else {
-        console.log('Supplier added:', data);
+        console.log('Supplier added successfully:', data);
         setSuppliers(prev => [...prev, data]);
         setShowAddSupplierModal(false);
         toast({
