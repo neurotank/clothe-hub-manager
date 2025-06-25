@@ -30,20 +30,7 @@ export const useSupabaseData = () => {
       
       if (error) {
         console.error('Error getting user ID:', error);
-        // Try by email as fallback
-        const { data: emailData, error: emailError } = await supabase
-          .from('users')
-          .select('id')
-          .eq('email', user.email)
-          .maybeSingle();
-        
-        if (emailError) {
-          console.error('Error getting user by email:', emailError);
-          return null;
-        }
-        
-        console.log('Found user by email:', emailData);
-        return emailData?.id || null;
+        return null;
       }
       
       console.log('Found user by auth_user_id:', data);
@@ -149,6 +136,53 @@ export const useSupabaseData = () => {
     }
   }, [user, fetchSuppliers, fetchGarments]);
 
+  // Set up real-time subscriptions
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('Setting up real-time subscriptions');
+
+    // Suppliers real-time subscription
+    const suppliersChannel = supabase
+      .channel('suppliers-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'suppliers'
+        },
+        (payload) => {
+          console.log('Suppliers real-time update:', payload);
+          fetchSuppliers();
+        }
+      )
+      .subscribe();
+
+    // Garments real-time subscription
+    const garmentsChannel = supabase
+      .channel('garments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'garments'
+        },
+        (payload) => {
+          console.log('Garments real-time update:', payload);
+          fetchGarments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up real-time subscriptions');
+      supabase.removeChannel(suppliersChannel);
+      supabase.removeChannel(garmentsChannel);
+    };
+  }, [user, fetchSuppliers, fetchGarments]);
+
   const addSupplier = async (supplierData: SupplierFormData) => {
     try {
       const userId = await getUserId();
@@ -182,12 +216,12 @@ export const useSupabaseData = () => {
         return null;
       }
 
-      // Update local state
-      setSuppliers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
       toast({
         title: "Éxito",
         description: "Proveedor agregado correctamente",
       });
+      
+      // The real-time subscription will handle the update
       return data;
     } catch (error) {
       console.error('Exception adding supplier:', error);
@@ -236,12 +270,12 @@ export const useSupabaseData = () => {
         return;
       }
 
-      // Update local state
-      setGarments(prev => [data, ...prev]);
       toast({
         title: "Éxito",
         description: "Prenda agregada correctamente",
       });
+      
+      // The real-time subscription will handle the update
     } catch (error) {
       console.error('Exception adding garment:', error);
       toast({
@@ -279,9 +313,6 @@ export const useSupabaseData = () => {
         return;
       }
 
-      // Update local state
-      setGarments(prev => prev.map(g => g.id === garmentId ? data : g));
-
       // Send WhatsApp message
       if (supplier && garment) {
         sendWhatsAppMessage(supplier, garment);
@@ -291,6 +322,8 @@ export const useSupabaseData = () => {
         title: "Éxito",
         description: "Prenda marcada como vendida",
       });
+
+      // The real-time subscription will handle the update
     } catch (error) {
       console.error('Exception marking as sold:', error);
       toast({
@@ -344,11 +377,12 @@ Tu prenda "${garment.name}" se ha vendido exitosamente.
         return;
       }
 
-      setGarments(prev => prev.map(g => g.id === garmentId ? data : g));
       toast({
         title: "Éxito",
         description: "Pago registrado correctamente",
       });
+
+      // The real-time subscription will handle the update
     } catch (error) {
       console.error('Exception marking as paid:', error);
       toast({
@@ -376,11 +410,12 @@ Tu prenda "${garment.name}" se ha vendido exitosamente.
         return;
       }
 
-      setGarments(prev => prev.filter(g => g.id !== garmentId));
       toast({
         title: "Éxito",
         description: "Prenda eliminada correctamente",
       });
+
+      // The real-time subscription will handle the update
     } catch (error) {
       console.error('Exception deleting garment:', error);
       toast({
