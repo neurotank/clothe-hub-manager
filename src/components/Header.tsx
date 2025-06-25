@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const Header = () => {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
@@ -18,6 +18,9 @@ const Header = () => {
   };
 
   const isActive = (path: string) => location.pathname === path;
+
+  // Only admin user can access admin dashboard
+  const isAdmin = user?.email === 'admin@consignapp.com';
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
@@ -36,19 +39,21 @@ const Header = () => {
                 Proveedores
               </Button>
               
-              <Button
-                variant={isActive('/admin') ? 'default' : 'ghost'}
-                onClick={() => navigate('/admin')}
-                className="text-sm"
-              >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Administrador
-              </Button>
+              {isAdmin && (
+                <Button
+                  variant={isActive('/admin') ? 'default' : 'ghost'}
+                  onClick={() => navigate('/admin')}
+                  className="text-sm"
+                >
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Administrador
+                </Button>
+              )}
             </nav>
           </div>
           
           <div className="flex items-center space-x-4">
-            {isMobile && location.pathname === '/dashboard' && (
+            {isMobile && location.pathname === '/dashboard' && isAdmin && (
               <Button
                 variant="outline"
                 onClick={() => navigate('/admin')}

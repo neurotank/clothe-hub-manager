@@ -163,7 +163,7 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
                       className="text-green-600 border-green-600 hover:bg-green-50 text-xs px-2 py-1 h-auto min-h-[32px]"
                     >
                       <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="ml-1 hidden sm:inline">
+                      <span className="ml-1">
                         {isMobile ? 'Vendido' : 'Vender'}
                       </span>
                     </Button>
@@ -176,7 +176,7 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
                       className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs px-2 py-1 h-auto min-h-[32px]"
                     >
                       <DollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="ml-1 hidden sm:inline">
+                      <span className="ml-1">
                         {isMobile ? 'Pagado' : 'Pagar'}
                       </span>
                     </Button>
@@ -188,7 +188,7 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
                     className="text-red-600 border-red-600 hover:bg-red-50 text-xs px-2 py-1 h-auto min-h-[32px]"
                   >
                     <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span className="ml-1 hidden sm:inline">Eliminar</span>
+                    <span className="ml-1">Eliminar</span>
                   </Button>
                 </div>
               </TableCell>
