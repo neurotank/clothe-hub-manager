@@ -8,8 +8,10 @@ import { Search, Filter, X } from 'lucide-react';
 interface SearchAndFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  statusFilter: 'all' | 'available' | 'sold' | 'pending_payment' | 'paid';
-  onStatusFilterChange: (filter: 'all' | 'available' | 'sold' | 'pending_payment' | 'paid') => void;
+  statusFilter?: 'all' | 'available' | 'sold' | 'pending_payment' | 'paid';
+  onStatusFilterChange?: (filter: 'all' | 'available' | 'sold' | 'pending_payment' | 'paid') => void;
+  phoneFilter?: string;
+  onPhoneFilterChange?: (value: string) => void;
   showSupplierFilter?: boolean;
   supplierFilter?: string;
   onSupplierFilterChange?: (value: string) => void;
@@ -20,6 +22,8 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
+  phoneFilter,
+  onPhoneFilterChange,
   showSupplierFilter = false,
   supplierFilter = '',
   onSupplierFilterChange
@@ -45,6 +49,16 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
           />
         </div>
         
+        {phoneFilter !== undefined && onPhoneFilterChange && (
+          <div className="relative sm:w-64">
+            <Input
+              placeholder="Filtrar por teléfono..."
+              value={phoneFilter}
+              onChange={(e) => onPhoneFilterChange(e.target.value)}
+            />
+          </div>
+        )}
+        
         {showSupplierFilter && onSupplierFilterChange && (
           <div className="relative sm:w-64">
             <Input
@@ -56,36 +70,39 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {statusFilters.map((filter) => (
-          <Button
-            key={filter.key}
-            variant={statusFilter === filter.key ? "default" : "outline"}
-            size="sm"
-            onClick={() => onStatusFilterChange(filter.key as any)}
-            className="text-xs"
-          >
-            <Filter className="w-3 h-3 mr-1" />
-            {filter.label}
-          </Button>
-        ))}
-        
-        {(searchTerm || statusFilter !== 'all' || supplierFilter) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              onSearchChange('');
-              onStatusFilterChange('all');
-              if (onSupplierFilterChange) onSupplierFilterChange('');
-            }}
-            className="text-xs text-gray-500"
-          >
-            <X className="w-3 h-3 mr-1" />
-            Limpiar filtros
-          </Button>
-        )}
-      </div>
+      {statusFilter && onStatusFilterChange && (
+        <div className="flex flex-wrap gap-2">
+          {statusFilters.map((filter) => (
+            <Button
+              key={filter.key}
+              variant={statusFilter === filter.key ? "default" : "outline"}
+              size="sm"
+              onClick={() => onStatusFilterChange(filter.key as any)}
+              className="text-xs"
+            >
+              <Filter className="w-3 h-3 mr-1" />
+              {filter.label}
+            </Button>
+          ))}
+          
+          {(searchTerm || statusFilter !== 'all' || supplierFilter || phoneFilter) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                onSearchChange('');
+                onStatusFilterChange('all');
+                if (onSupplierFilterChange) onSupplierFilterChange('');
+                if (onPhoneFilterChange) onPhoneFilterChange('');
+              }}
+              className="text-xs text-gray-500"
+            >
+              <X className="w-3 h-3 mr-1" />
+              Limpiar filtros
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

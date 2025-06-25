@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Check, X, DollarSign } from 'lucide-react';
-import { Garment } from '../types';
+import { Garment, Supplier } from '../types';
 
 interface GarmentsTableProps {
   garments: Garment[];
@@ -19,6 +19,10 @@ interface GarmentsTableProps {
   onMarkAsPaid?: (garmentId: string, garmentName: string) => void;
   onDelete: (garmentId: string, garmentName: string) => void;
   hideActions?: Array<'markAsSold' | 'markAsPaid'>;
+  suppliers?: Supplier[];
+  showSupplierColumn?: boolean;
+  adminMode?: boolean;
+  supplier?: Supplier;
 }
 
 const GarmentsTable: React.FC<GarmentsTableProps> = ({
@@ -26,7 +30,11 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
   onMarkAsSold,
   onMarkAsPaid,
   onDelete,
-  hideActions = []
+  hideActions = [],
+  suppliers = [],
+  showSupplierColumn = false,
+  adminMode = false,
+  supplier
 }) => {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-AR', {
@@ -52,6 +60,11 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
     }
   };
 
+  const getSupplierName = (supplierId: string) => {
+    const foundSupplier = suppliers.find(s => s.id === supplierId);
+    return foundSupplier ? `${foundSupplier.name} ${foundSupplier.surname}` : 'N/A';
+  };
+
   if (garments.length === 0) {
     return (
       <div className="text-center py-8">
@@ -74,6 +87,7 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
             <TableHead className="hidden lg:table-cell">Precio Venta</TableHead>
             <TableHead className="hidden md:table-cell">Creado</TableHead>
             <TableHead className="hidden md:table-cell">Vendido</TableHead>
+            {showSupplierColumn && <TableHead className="hidden md:table-cell">Proveedor</TableHead>}
             <TableHead className="text-center">Estado</TableHead>
             <TableHead className="text-center">Pago</TableHead>
             <TableHead className="text-center">Acciones</TableHead>
@@ -126,6 +140,11 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
               <TableCell className="hidden md:table-cell">
                 {garment.sold_at ? formatDate(garment.sold_at) : '-'}
               </TableCell>
+              {showSupplierColumn && (
+                <TableCell className="hidden md:table-cell">
+                  {garment.supplier_id ? getSupplierName(garment.supplier_id) : 'N/A'}
+                </TableCell>
+              )}
               <TableCell className="text-center">
                 <Badge 
                   variant={garment.is_sold ? "secondary" : "default"}
