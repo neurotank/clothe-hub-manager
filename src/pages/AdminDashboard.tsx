@@ -27,7 +27,7 @@ const AdminDashboard = () => {
   
   const [selectedMonth, setSelectedMonth] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending_payment' | 'paid'>('all');
   
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
@@ -41,7 +41,10 @@ const AdminDashboard = () => {
     garmentName: string;
   }>({ open: false, garmentId: null, garmentName: '' });
 
-  const filteredGarments = garments.filter(garment => {
+  // Only show sold garments in admin dashboard
+  const soldGarments = garments.filter(g => g.is_sold);
+
+  const filteredGarments = soldGarments.filter(garment => {
     // Combined search: name, size, code, and supplier
     const supplier = suppliers.find(s => s.id === garment.supplier_id);
     const supplierName = supplier ? `${supplier.name} ${supplier.surname}` : '';
@@ -53,12 +56,8 @@ const AdminDashboard = () => {
       supplierName.toLowerCase().includes(searchTerm.toLowerCase());
     
     let matchesStatus = true;
-    if (statusFilter === 'available') {
-      matchesStatus = !garment.is_sold;
-    } else if (statusFilter === 'sold') {
-      matchesStatus = garment.is_sold;
-    } else if (statusFilter === 'pending_payment') {
-      matchesStatus = garment.is_sold && garment.payment_status === 'pending';
+    if (statusFilter === 'pending_payment') {
+      matchesStatus = garment.payment_status === 'pending';
     } else if (statusFilter === 'paid') {
       matchesStatus = garment.payment_status === 'paid';
     }
@@ -72,12 +71,11 @@ const AdminDashboard = () => {
     return matchesSearch && matchesStatus && matchesMonth;
   });
 
-  const soldGarments = filteredGarments.filter(g => g.is_sold);
-  const availableGarments = filteredGarments.filter(g => !g.is_sold);
-  const pendingPayments = filteredGarments.filter(g => g.is_sold && g.payment_status === 'pending');
+  const availableGarments = garments.filter(g => !g.is_sold);
+  const pendingPayments = filteredGarments.filter(g => g.payment_status === 'pending');
 
-  const totalRevenue = soldGarments.reduce((sum, garment) => sum + garment.sale_price, 0);
-  const totalCost = soldGarments.reduce((sum, garment) => sum + garment.purchase_price, 0);
+  const totalRevenue = filteredGarments.reduce((sum, garment) => sum + garment.sale_price, 0);
+  const totalCost = filteredGarments.reduce((sum, garment) => sum + garment.purchase_price, 0);
   const totalProfit = totalRevenue - totalCost;
 
   const formatPrice = (price: number) => {
@@ -193,7 +191,7 @@ const AdminDashboard = () => {
                   {formatPrice(totalRevenue)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {soldGarments.length} prendas vendidas
+                  {filteredGarments.length} prendas vendidas
                 </p>
               </CardContent>
             </Card>
@@ -239,9 +237,9 @@ const AdminDashboard = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Todas las Prendas</CardTitle>
+              <CardTitle>Prendas Vendidas</CardTitle>
               <CardDescription>
-                Gestión completa del inventario
+                Gestión de prendas vendidas y pagos
               </CardDescription>
             </CardHeader>
             <CardContent>

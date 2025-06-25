@@ -38,13 +38,28 @@ const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
-  const statusFilters = [
-    { key: 'all', label: 'Todos' },
-    { key: 'available', label: 'Disponibles' },
-    { key: 'sold', label: 'Vendidas' },
-    { key: 'pending_payment', label: 'Pago Pendiente' },
-    { key: 'paid', label: 'Pagadas' },
-  ];
+  // Determine which filters to show based on the current statusFilter type
+  const getStatusFilters = () => {
+    if (statusFilter === 'all' || statusFilter === 'pending_payment' || statusFilter === 'paid') {
+      // Admin filters (only for sold garments)
+      return [
+        { key: 'all', label: 'Todos' },
+        { key: 'pending_payment', label: 'Pago Pendiente' },
+        { key: 'paid', label: 'Pagadas' },
+      ];
+    } else {
+      // Regular filters (includes available/sold)
+      return [
+        { key: 'all', label: 'Todos' },
+        { key: 'available', label: 'Disponibles' },
+        { key: 'sold', label: 'Vendidas' },
+        { key: 'pending_payment', label: 'Pago Pendiente' },
+        { key: 'paid', label: 'Pagadas' },
+      ];
+    }
+  };
+
+  const statusFilters = getStatusFilters();
 
   const handleBack = () => {
     if (onBack) {
