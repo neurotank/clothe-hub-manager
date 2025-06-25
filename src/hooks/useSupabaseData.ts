@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -194,7 +193,11 @@ export const useSupabaseData = () => {
     });
   };
 
-  const markAsSold = async (garmentId: string) => {
+  const markAsSold = async (garmentId: string, garmentName: string) => {
+    // Obtener la prenda y el proveedor para el WhatsApp
+    const garment = garments.find(g => g.id === garmentId);
+    const supplier = suppliers.find(s => s.id === garment?.supplier_id);
+
     const { data, error } = await supabase
       .from('garments')
       .update({ 
@@ -219,10 +222,37 @@ export const useSupabaseData = () => {
     setGarments(prev => prev.map(garment => 
       garment.id === garmentId ? data : garment
     ));
+
+    // Enviar WhatsApp si tenemos los datos del proveedor
+    if (supplier && garment) {
+      sendWhatsAppMessage(supplier, garment);
+    }
+
     toast({
       title: "Éxito",
       description: "Prenda marcada como vendida",
     });
+  };
+
+  const sendWhatsAppMessage = (supplier: Supplier, garment: any) => {
+    // Limpiar el número de teléfono, eliminando espacios y agregando el código de país
+    const cleanPhone = supplier.phone.replace(/\s/g, '');
+    const fullPhone = `54${cleanPhone}`;
+    
+    const supplierName = `${supplier.name} ${supplier.surname}`;
+    
+    const message = `¡Hola ${supplierName}! 👋
+
+Tu prenda "${garment.name}" se ha vendido exitosamente. 
+
+💰 Podés pasar a retirar tu pago los martes y jueves de 18 a 20hs, sin excepción.
+
+¡Gracias por confiar en nosotros!`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${fullPhone}?text=${encodedMessage}`;
+    
+    window.open(whatsappUrl, '_blank');
   };
 
   const markAsPaid = async (garmentId: string) => {

@@ -1,16 +1,14 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, DollarSign, Package, TrendingUp, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import GarmentsTable from '../components/GarmentsTable';
+import PaymentConfirmDialog from '../components/PaymentConfirmDialog';
+import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
 import MonthFilter from '../components/MonthFilter';
 import { useSupabaseData } from '../hooks/useSupabaseData';
 
 const AdminDashboard = () => {
-  const navigate = useNavigate();
   const {
     suppliers,
     getAllSoldGarments,
@@ -20,6 +18,18 @@ const AdminDashboard = () => {
   } = useSupabaseData();
   
   const [selectedMonth, setSelectedMonth] = useState('');
+  
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    garmentId: string | null;
+    garmentName: string;
+  }>({ open: false, garmentId: null, garmentName: '' });
+
+  const [paymentDialog, setPaymentDialog] = useState<{
+    open: boolean;
+    garmentId: string | null;
+    garmentName: string;
+  }>({ open: false, garmentId: null, garmentName: '' });
 
   const allSoldGarments = getAllSoldGarments();
 
@@ -32,19 +42,46 @@ const AdminDashboard = () => {
       })
     : allSoldGarments;
 
-  // Calcular estadísticas
-  const totalSales = filteredGarments.length;
-  const totalRevenue = filteredGarments.reduce((sum, garment) => sum + garment.sale_price, 0);
-  const totalCost = filteredGarments.reduce((sum, garment) => sum + garment.purchase_price, 0);
-  const totalProfit = totalRevenue - totalCost;
-  const paidGarments = filteredGarments.filter(g => g.payment_status === 'paid').length;
-  const pendingPayments = filteredGarments.filter(g => g.payment_status === 'pending').length;
+  const handleDeleteClick = (garmentId: string, garmentName: string) => {
+    setDeleteDialog({
+      open: true,
+      garmentId,
+      garmentName
+    });
+  };
 
-  const formatCurrency = (amount: number) => {
+  const handleDeleteConfirm = async () => {
+    if (!deleteDialog.garmentId) return;
+    await deleteGarment(deleteDialog.garmentId);
+    setDeleteDialog({ open: false, garmentId: null, garmentName: '' });
+  };
+
+  const handlePaymentClick = (garmentId: string, garmentName: string) => {
+    setPaymentDialog({
+      open: true,
+      garmentId,
+      garmentName
+    });
+  };
+
+  const handlePaymentConfirm = async () => {
+    if (!paymentDialog.garmentId) return;
+    await markAsPaid(paymentDialog.garmentId);
+    setPaymentDialog({ open: false, garmentId: null, garmentName: '' });
+  };
+
+  // Calcular estadísticas
+  const totalSales = filteredGarments.reduce((sum, garment) => sum + garment.sale_price, 0);
+  const totalPurchases = filteredGarments.reduce((sum, garment) => sum + garment.purchase_price, 0);
+  const totalProfit = totalSales - totalPurchases;
+  const pendingPayments = filteredGarments.filter(g => g.payment_status === 'pending').length;
+  const paidGarments = filteredGarments.filter(g => g.payment_status === 'paid').length;
+
+  const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency: 'ARS'
-    }).format(amount);
+    }).format(price);
   };
 
   if (loading) {
@@ -64,121 +101,60 @@ const AdminDashboard = () => {
       
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <div className="flex items-center mb-6">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/dashboard')}
-              className="mr-4"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Panel de Administrador</h1>
-              <p className="text-gray-600 mt-1">
-                Estadísticas de ventas y gestión de pagos
-              </p>
-            </div>
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Panel de Administrador</h1>
+            <p className="text-gray-600">Estadísticas de ventas y gestión de pagos</p>
           </div>
 
           {/* Estadísticas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Ventas Totales</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Ventas Totales</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{totalSales}</div>
-                <p className="text-xs text-muted-foreground">
-                  Prendas vendidas {selectedMonth ? 'este mes' : 'total'}
-                </p>
+                <div className="text-2xl font-bold text-green-600">{formatPrice(totalSales)}</div>
+                <p className="text-xs text-gray-500">{filteredGarments.length} prendas vendidas</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Ingresos</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Ganancia Total</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-                <p className="text-xs text-muted-foreground">
-                  Ingresos por ventas
-                </p>
+                <div className="text-2xl font-bold text-blue-600">{formatPrice(totalProfit)}</div>
+                <p className="text-xs text-gray-500">Venta - Compra</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Ganancias</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Pagos Pendientes</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{formatCurrency(totalProfit)}</div>
-                <p className="text-xs text-muted-foreground">
-                  Ganancia neta
-                </p>
+                <div className="text-2xl font-bold text-yellow-600">{pendingPayments}</div>
+                <p className="text-xs text-gray-500">Prendas por pagar</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Proveedores</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Pagos Realizados</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{suppliers.length}</div>
-                <p className="text-xs text-muted-foreground">
-                  Total de proveedores
-                </p>
+                <div className="text-2xl font-bold text-gray-600">{paidGarments}</div>
+                <p className="text-xs text-gray-500">Prendas pagadas</p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Estado de Pagos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Estado de Pagos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-green-600">Pagados:</span>
-                    <span className="font-semibold">{paidGarments}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-yellow-600">Pendientes:</span>
-                    <span className="font-semibold">{pendingPayments}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Margen de Ganancia</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
-                  {totalRevenue > 0 ? Math.round((totalProfit / totalRevenue) * 100) : 0}%
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Margen promedio de ganancia
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Tabla de Prendas Vendidas */}
-          <div className="bg-white shadow-sm rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
+          {/* Tabla de prendas vendidas */}
+          <Card>
+            <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Prendas Vendidas
-                  </h2>
+                  <CardTitle>Prendas Vendidas</CardTitle>
                   <p className="text-gray-600 mt-1">
                     {filteredGarments.length} prendas encontradas
                   </p>
@@ -188,19 +164,35 @@ const AdminDashboard = () => {
                   onMonthChange={setSelectedMonth}
                 />
               </div>
-            </div>
-            
-            <GarmentsTable
-              garments={filteredGarments}
-              onMarkAsPaid={markAsPaid}
-              onDelete={deleteGarment}
-              suppliers={suppliers}
-              showSupplierColumn={true}
-              adminMode={true}
-            />
-          </div>
+            </CardHeader>
+            <CardContent>
+              <GarmentsTable
+                garments={filteredGarments}
+                onMarkAsPaid={handlePaymentClick}
+                onDelete={handleDeleteClick}
+                suppliers={suppliers}
+                showSupplierColumn={true}
+                adminMode={true}
+                hideActions={['markAsSold']}
+              />
+            </CardContent>
+          </Card>
         </div>
       </main>
+
+      <DeleteConfirmDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}
+        onConfirm={handleDeleteConfirm}
+        itemName={deleteDialog.garmentName}
+      />
+
+      <PaymentConfirmDialog
+        open={paymentDialog.open}
+        onOpenChange={(open) => setPaymentDialog(prev => ({ ...prev, open }))}
+        onConfirm={handlePaymentConfirm}
+        garmentName={paymentDialog.garmentName}
+      />
     </div>
   );
 };

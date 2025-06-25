@@ -10,7 +10,6 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import SupplierDetail from "./pages/SupplierDetail";
 import AdminDashboard from "./pages/AdminDashboard";
-import MyGarments from "./pages/MyGarments";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,11 +36,6 @@ const App = () => (
             <Route path="/admin" element={
               <ProtectedRoute>
                 <AdminDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/my-garments" element={
-              <ProtectedRoute>
-                <MyGarments />
               </ProtectedRoute>
             } />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

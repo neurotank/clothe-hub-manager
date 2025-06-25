@@ -7,6 +7,9 @@ import Header from '../components/Header';
 import SupplierInfo from '../components/SupplierInfo';
 import GarmentsTable from '../components/GarmentsTable';
 import AddGarmentModal from '../components/AddGarmentModal';
+import SellConfirmDialog from '../components/SellConfirmDialog';
+import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
+import PaymentConfirmDialog from '../components/PaymentConfirmDialog';
 import MonthFilter from '../components/MonthFilter';
 import { useSupabaseData } from '../hooks/useSupabaseData';
 
@@ -23,6 +26,24 @@ const SupplierDetail = () => {
   
   const [isAddGarmentOpen, setIsAddGarmentOpen] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState('');
+  
+  const [sellDialog, setSellDialog] = useState<{
+    open: boolean;
+    garmentId: string | null;
+    garmentName: string;
+  }>({ open: false, garmentId: null, garmentName: '' });
+
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    garmentId: string | null;
+    garmentName: string;
+  }>({ open: false, garmentId: null, garmentName: '' });
+
+  const [paymentDialog, setPaymentDialog] = useState<{
+    open: boolean;
+    garmentId: string | null;
+    garmentName: string;
+  }>({ open: false, garmentId: null, garmentName: '' });
 
   const supplier = suppliers.find(s => s.id === id);
   const allGarments = id ? getGarmentsBySupplier(id) : [];
@@ -35,6 +56,48 @@ const SupplierDetail = () => {
                garmentDate.getMonth() === parseInt(month) - 1;
       })
     : allGarments;
+
+  const handleSellClick = (garmentId: string, garmentName: string) => {
+    setSellDialog({
+      open: true,
+      garmentId,
+      garmentName
+    });
+  };
+
+  const handleSellConfirm = async () => {
+    if (!sellDialog.garmentId) return;
+    await markAsSold(sellDialog.garmentId, sellDialog.garmentName);
+    setSellDialog({ open: false, garmentId: null, garmentName: '' });
+  };
+
+  const handleDeleteClick = (garmentId: string, garmentName: string) => {
+    setDeleteDialog({
+      open: true,
+      garmentId,
+      garmentName
+    });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteDialog.garmentId) return;
+    await deleteGarment(deleteDialog.garmentId);
+    setDeleteDialog({ open: false, garmentId: null, garmentName: '' });
+  };
+
+  const handlePaymentClick = (garmentId: string, garmentName: string) => {
+    setPaymentDialog({
+      open: true,
+      garmentId,
+      garmentName
+    });
+  };
+
+  const handlePaymentConfirm = async () => {
+    if (!paymentDialog.garmentId) return;
+    await markAsPaid(paymentDialog.garmentId);
+    setPaymentDialog({ open: false, garmentId: null, garmentName: '' });
+  };
 
   if (loading) {
     return (
@@ -95,9 +158,9 @@ const SupplierDetail = () => {
             
             <GarmentsTable
               garments={filteredGarments}
-              onMarkAsSold={markAsSold}
-              onMarkAsPaid={markAsPaid}
-              onDelete={deleteGarment}
+              onMarkAsSold={handleSellClick}
+              onMarkAsPaid={handlePaymentClick}
+              onDelete={handleDeleteClick}
               supplier={supplier}
             />
           </div>
@@ -108,6 +171,27 @@ const SupplierDetail = () => {
         isOpen={isAddGarmentOpen}
         onClose={() => setIsAddGarmentOpen(false)}
         supplierId={id!}
+      />
+
+      <SellConfirmDialog
+        open={sellDialog.open}
+        onOpenChange={(open) => setSellDialog(prev => ({ ...prev, open }))}
+        onConfirm={handleSellConfirm}
+        garmentName={sellDialog.garmentName}
+      />
+
+      <DeleteConfirmDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}
+        onConfirm={handleDeleteConfirm}
+        itemName={deleteDialog.garmentName}
+      />
+
+      <PaymentConfirmDialog
+        open={paymentDialog.open}
+        onOpenChange={(open) => setPaymentDialog(prev => ({ ...prev, open }))}
+        onConfirm={handlePaymentConfirm}
+        garmentName={paymentDialog.garmentName}
       />
     </div>
   );

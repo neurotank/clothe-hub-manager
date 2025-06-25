@@ -1,6 +1,8 @@
 
 import React from 'react';
 import { Supplier } from '../types';
+import { Button } from '@/components/ui/button';
+import { Eye } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -45,19 +47,30 @@ const SuppliersTable: React.FC<SuppliersTableProps> = ({ suppliers, onSupplierCl
                 <TableHead>Apellido</TableHead>
                 <TableHead>Teléfono</TableHead>
                 <TableHead>Fecha de Registro</TableHead>
+                <TableHead className="text-center">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {suppliers.map((supplier) => (
                 <TableRow 
                   key={supplier.id}
-                  className="cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={() => onSupplierClick(supplier.id)}
+                  className="hover:bg-gray-50 transition-colors"
                 >
                   <TableCell className="font-medium">{supplier.name}</TableCell>
                   <TableCell>{supplier.surname}</TableCell>
                   <TableCell>{supplier.phone}</TableCell>
                   <TableCell>{formatDate(supplier.created_at)}</TableCell>
+                  <TableCell className="text-center">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onSupplierClick(supplier.id)}
+                      className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Ver Detalles
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

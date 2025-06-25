@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, Settings, BarChart3, Package } from 'lucide-react';
+import { LogOut, BarChart3, Package } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -32,15 +32,6 @@ const Header = () => {
               >
                 <Package className="w-4 h-4 mr-2" />
                 Proveedores
-              </Button>
-              
-              <Button
-                variant={isActive('/my-garments') ? 'default' : 'ghost'}
-                onClick={() => navigate('/my-garments')}
-                className="text-sm"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Mis Prendas
               </Button>
               
               <Button

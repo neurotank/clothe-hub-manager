@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Check, X, DollarSign } from 'lucide-react';
+import { Check, X, DollarSign, Eye } from 'lucide-react';
 import { Garment, Supplier } from '../types';
 
 interface GarmentsTableProps {
@@ -69,7 +69,7 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
     return (
       <div className="text-center py-8">
         <p className="text-gray-500 mb-4">
-          No hay prendas registradas para este proveedor
+          No hay prendas registradas
         </p>
       </div>
     );
@@ -83,8 +83,8 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
             <TableHead>Código</TableHead>
             <TableHead>Nombre</TableHead>
             <TableHead className="hidden sm:table-cell">Talle</TableHead>
-            <TableHead className="hidden lg:table-cell">Precio Compra</TableHead>
-            <TableHead className="hidden lg:table-cell">Precio Venta</TableHead>
+            <TableHead>Precio Compra</TableHead>
+            <TableHead>Precio Venta</TableHead>
             <TableHead className="hidden md:table-cell">Creado</TableHead>
             <TableHead className="hidden md:table-cell">Vendido</TableHead>
             {showSupplierColumn && <TableHead className="hidden md:table-cell">Proveedor</TableHead>}
@@ -111,28 +111,22 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
                 <div>
                   <div className="font-medium">{garment.name}</div>
                   <div className="sm:hidden text-xs text-gray-500 mt-1">
-                    <div className="flex flex-col space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-blue-600 font-medium">Compra:</span>
-                        <span className="font-semibold">{formatPrice(garment.purchase_price)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-green-600 font-medium">Venta:</span>
-                        <span className="font-semibold">{formatPrice(garment.sale_price)}</span>
-                      </div>
-                      <div className="text-gray-400 text-xs">
-                        Creado: {formatDate(garment.created_at)}
-                      </div>
+                    <div className="text-gray-400 text-xs">
+                      Creado: {formatDate(garment.created_at)}
                     </div>
                   </div>
                 </div>
               </TableCell>
               <TableCell className="hidden sm:table-cell">{garment.size}</TableCell>
-              <TableCell className="hidden lg:table-cell">
-                {formatPrice(garment.purchase_price)}
+              <TableCell>
+                <span className="font-semibold text-blue-600">
+                  {formatPrice(garment.purchase_price)}
+                </span>
               </TableCell>
-              <TableCell className="hidden lg:table-cell">
-                {formatPrice(garment.sale_price)}
+              <TableCell>
+                <span className="font-semibold text-green-600">
+                  {formatPrice(garment.sale_price)}
+                </span>
               </TableCell>
               <TableCell className="hidden md:table-cell">
                 {formatDate(garment.created_at)}
