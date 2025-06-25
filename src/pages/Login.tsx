@@ -129,11 +129,11 @@ const Login = () => {
                 type="button"
                 variant="outline"
                 className="w-full text-left justify-start"
-                onClick={() => setCredentials('admin@stockmanager.com', 'password123')}
+                onClick={() => setCredentials('admin@stockmanager.com', 'administrador123')}
               >
                 <div className="flex flex-col items-start">
                   <span className="font-medium">Admin</span>
-                  <span className="text-xs text-gray-500">admin@stockmanager.com / password123</span>
+                  <span className="text-xs text-gray-500">admin@stockmanager.com / administrador123</span>
                 </div>
               </Button>
               
