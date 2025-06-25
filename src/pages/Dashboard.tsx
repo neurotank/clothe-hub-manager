@@ -5,6 +5,7 @@ import { Plus, Search } from 'lucide-react';
 import Header from '../components/Header';
 import AddSupplierModal from '../components/AddSupplierModal';
 import SearchAndFilters from '../components/SearchAndFilters';
+import SuppliersTable from '../components/SuppliersTable';
 import { useSupabaseData } from '../hooks/useSupabaseData';
 import { useNavigate } from 'react-router-dom';
 
@@ -21,6 +22,10 @@ const Dashboard = () => {
     const matchesPhone = supplier.phone.includes(phoneFilter);
     return matchesSearch && matchesPhone;
   });
+
+  const handleSupplierClick = (supplierId: string) => {
+    navigate(`/supplier/${supplierId}`);
+  };
 
   if (loading) {
     return (
@@ -80,29 +85,10 @@ const Dashboard = () => {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredSuppliers.map((supplier) => (
-                <div
-                  key={supplier.id}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/supplier/${supplier.id}`)}
-                >
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {supplier.name} {supplier.surname}
-                    </h3>
-                    <p className="text-gray-600 flex items-center">
-                      📱 {supplier.phone}
-                    </p>
-                    <div className="pt-2 border-t border-gray-100">
-                      <p className="text-sm text-gray-500">
-                        Registrado: {new Date(supplier.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <SuppliersTable 
+              suppliers={filteredSuppliers}
+              onSupplierClick={handleSupplierClick}
+            />
           )}
         </div>
       </main>

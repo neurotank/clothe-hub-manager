@@ -9,7 +9,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import SupplierDetail from "./pages/SupplierDetail";
-import AdminSoldGarments from "./pages/AdminSoldGarments";
+import AdminDashboard from "./pages/AdminDashboard";
+import MyGarments from "./pages/MyGarments";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,9 +34,14 @@ const App = () => (
                 <SupplierDetail />
               </ProtectedRoute>
             } />
-            <Route path="/admin/sold-garments" element={
+            <Route path="/admin" element={
               <ProtectedRoute>
-                <AdminSoldGarments />
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/my-garments" element={
+              <ProtectedRoute>
+                <MyGarments />
               </ProtectedRoute>
             } />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

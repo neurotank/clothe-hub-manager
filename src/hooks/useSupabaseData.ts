@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -48,7 +49,7 @@ export const useSupabaseData = () => {
     return data?.id;
   };
 
-  // Cargar proveedores
+  // Cargar proveedores con orden alfabético
   const fetchSuppliers = async () => {
     const userId = await getUserId();
     if (!userId) {
@@ -61,7 +62,8 @@ export const useSupabaseData = () => {
     const { data, error } = await supabase
       .from('suppliers')
       .select('*')
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .order('name', { ascending: true });
 
     if (error) {
       console.error('Error fetching suppliers:', error);
@@ -76,7 +78,7 @@ export const useSupabaseData = () => {
     }
   };
 
-  // Cargar prendas
+  // Cargar prendas ordenadas por fecha de creación (más reciente primero)
   const fetchGarments = async () => {
     const userId = await getUserId();
     if (!userId) {
@@ -89,7 +91,8 @@ export const useSupabaseData = () => {
     const { data, error } = await supabase
       .from('garments')
       .select('*')
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching garments:', error);
@@ -146,7 +149,8 @@ export const useSupabaseData = () => {
       return null;
     }
 
-    setSuppliers(prev => [...prev, data]);
+    // Actualizar la lista ordenada alfabéticamente
+    setSuppliers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
     toast({
       title: "Éxito",
       description: "Proveedor agregado correctamente",
@@ -182,7 +186,8 @@ export const useSupabaseData = () => {
       return;
     }
 
-    setGarments(prev => [...prev, data]);
+    // Insertar al principio de la lista (más reciente primero)
+    setGarments(prev => [data, ...prev]);
     toast({
       title: "Éxito",
       description: "Prenda agregada correctamente",
