@@ -80,12 +80,6 @@ const Dashboard = () => {
             </Button>
           </div>
 
-          <SearchAndFilters
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            searchPlaceholder="Buscar por nombre o apellido..."
-          />
-
           {filteredSuppliers.length === 0 ? (
             <div className="text-center py-12">
               <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -107,10 +101,23 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              <SuppliersTable 
-                suppliers={paginatedSuppliers}
-                onSupplierClick={handleSupplierClick}
-              />
+              <div className="bg-white shadow-sm rounded-lg">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h2 className="text-xl font-semibold text-gray-900">Proveedores ({filteredSuppliers.length})</h2>
+                </div>
+                <div className="p-6">
+                  <SearchAndFilters
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    searchPlaceholder="Buscar por nombre o apellido..."
+                  />
+                  
+                  <SuppliersTable 
+                    suppliers={paginatedSuppliers}
+                    onSupplierClick={handleSupplierClick}
+                  />
+                </div>
+              </div>
               
               {totalPages > 1 && (
                 <div className="flex justify-center">

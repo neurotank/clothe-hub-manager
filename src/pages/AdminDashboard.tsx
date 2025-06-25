@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import MonthFilter from '../components/MonthFilter';
 import SearchAndFilters from '../components/SearchAndFilters';
 import GarmentsTable from '../components/GarmentsTable';
 import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
+import PaymentConfirmDialog from '../components/PaymentConfirmDialog';
 import { useSupabaseData } from '../hooks/useSupabaseData';
 import { useIsMobile } from '../hooks/use-mobile';
 
@@ -19,12 +21,12 @@ const AdminDashboard = () => {
     suppliers,
     garments,
     deleteGarment,
+    markAsPaid,
     loading
   } = useSupabaseData();
   
   const [selectedMonth, setSelectedMonth] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [supplierFilter, setSupplierFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
   
   const [deleteDialog, setDeleteDialog] = useState<{
@@ -33,11 +35,22 @@ const AdminDashboard = () => {
     garmentName: string;
   }>({ open: false, garmentId: null, garmentName: '' });
 
+  const [paymentDialog, setPaymentDialog] = useState<{
+    open: boolean;
+    garmentId: string | null;
+    garmentName: string;
+  }>({ open: false, garmentId: null, garmentName: '' });
+
   const filteredGarments = garments.filter(garment => {
-    const matchesSearch = garment.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSupplier = !supplierFilter || 
-      suppliers.find(s => s.id === garment.supplier_id)?.name.toLowerCase().includes(supplierFilter.toLowerCase()) ||
-      suppliers.find(s => s.id === garment.supplier_id)?.surname.toLowerCase().includes(supplierFilter.toLowerCase());
+    // Combined search: name, size, code, and supplier
+    const supplier = suppliers.find(s => s.id === garment.supplier_id);
+    const supplierName = supplier ? `${supplier.name} ${supplier.surname}` : '';
+    
+    const matchesSearch = searchTerm === '' || 
+      garment.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      garment.size.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      garment.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      supplierName.toLowerCase().includes(searchTerm.toLowerCase());
     
     let matchesStatus = true;
     if (statusFilter === 'available') {
@@ -56,7 +69,7 @@ const AdminDashboard = () => {
       matchesMonth = garmentMonth === selectedMonth;
     }
     
-    return matchesSearch && matchesSupplier && matchesStatus && matchesMonth;
+    return matchesSearch && matchesStatus && matchesMonth;
   });
 
   const soldGarments = filteredGarments.filter(g => g.is_sold);
@@ -86,6 +99,20 @@ const AdminDashboard = () => {
     if (!deleteDialog.garmentId) return;
     await deleteGarment(deleteDialog.garmentId);
     setDeleteDialog({ open: false, garmentId: null, garmentName: '' });
+  };
+
+  const handlePaymentClick = (garmentId: string, garmentName: string) => {
+    setPaymentDialog({
+      open: true,
+      garmentId,
+      garmentName
+    });
+  };
+
+  const handlePaymentConfirm = async () => {
+    if (!paymentDialog.garmentId) return;
+    await markAsPaid(paymentDialog.garmentId);
+    setPaymentDialog({ open: false, garmentId: null, garmentName: '' });
   };
 
   if (loading) {
@@ -123,11 +150,6 @@ const AdminDashboard = () => {
             <h1 className="text-2xl font-bold text-gray-900">Panel de Administración</h1>
             <p className="text-gray-600 mt-1">Resumen general del negocio</p>
           </div>
-
-          <MonthFilter
-            selectedMonth={selectedMonth}
-            onMonthChange={setSelectedMonth}
-          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>
@@ -208,6 +230,13 @@ const AdminDashboard = () => {
             </Card>
           )}
 
+          <div className="mb-6 py-4">
+            <MonthFilter
+              selectedMonth={selectedMonth}
+              onMonthChange={setSelectedMonth}
+            />
+          </div>
+
           <Card>
             <CardHeader>
               <CardTitle>Todas las Prendas</CardTitle>
@@ -221,16 +250,14 @@ const AdminDashboard = () => {
                 onSearchChange={setSearchTerm}
                 statusFilter={statusFilter}
                 onStatusFilterChange={setStatusFilter}
-                showSupplierFilter={true}
-                supplierFilter={supplierFilter}
-                onSupplierFilterChange={setSupplierFilter}
-                searchPlaceholder="Buscar por nombre de prenda..."
+                searchPlaceholder="Buscar por prenda, talle, código o proveedor..."
               />
               
               <GarmentsTable
                 garments={filteredGarments}
                 onDelete={handleDeleteClick}
-                hideActions={['markAsSold', 'markAsPaid']}
+                onMarkAsPaid={handlePaymentClick}
+                hideActions={['markAsSold']}
                 suppliers={suppliers}
                 showSupplierColumn={true}
                 adminMode={true}
@@ -245,6 +272,13 @@ const AdminDashboard = () => {
         onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}
         onConfirm={handleDeleteConfirm}
         itemName={deleteDialog.garmentName}
+      />
+
+      <PaymentConfirmDialog
+        open={paymentDialog.open}
+        onOpenChange={(open) => setPaymentDialog(prev => ({ ...prev, open }))}
+        onConfirm={handlePaymentConfirm}
+        garmentName={paymentDialog.garmentName}
       />
     </div>
   );

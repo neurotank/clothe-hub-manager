@@ -11,7 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface SuppliersTableProps {
   suppliers: Supplier[];
@@ -25,59 +24,50 @@ const SuppliersTable: React.FC<SuppliersTableProps> = ({ suppliers, onSupplierCl
 
   if (suppliers.length === 0) {
     return (
-      <Card>
-        <CardContent className="text-center py-8">
-          <p className="text-gray-500">No hay proveedores registrados</p>
-        </CardContent>
-      </Card>
+      <div className="text-center py-8">
+        <p className="text-gray-500">No hay proveedores registrados</p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Proveedores ({suppliers.length})</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Apellido</TableHead>
-                <TableHead>Teléfono</TableHead>
-                <TableHead>Fecha de Registro</TableHead>
-                <TableHead className="text-center">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {suppliers.map((supplier) => (
-                <TableRow 
-                  key={supplier.id}
-                  className="hover:bg-gray-50 transition-colors"
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nombre</TableHead>
+            <TableHead>Apellido</TableHead>
+            <TableHead>Teléfono</TableHead>
+            <TableHead>Fecha de Registro</TableHead>
+            <TableHead className="text-center">Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {suppliers.map((supplier) => (
+            <TableRow 
+              key={supplier.id}
+              className="hover:bg-gray-50 transition-colors"
+            >
+              <TableCell className="font-medium">{supplier.name}</TableCell>
+              <TableCell>{supplier.surname}</TableCell>
+              <TableCell>{supplier.phone}</TableCell>
+              <TableCell>{formatDate(supplier.created_at)}</TableCell>
+              <TableCell className="text-center">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onSupplierClick(supplier.id)}
+                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
                 >
-                  <TableCell className="font-medium">{supplier.name}</TableCell>
-                  <TableCell>{supplier.surname}</TableCell>
-                  <TableCell>{supplier.phone}</TableCell>
-                  <TableCell>{formatDate(supplier.created_at)}</TableCell>
-                  <TableCell className="text-center">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onSupplierClick(supplier.id)}
-                      className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Ver Detalles
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Ver Detalles
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 

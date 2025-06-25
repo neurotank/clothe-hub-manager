@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Check, X, DollarSign, Eye } from 'lucide-react';
 import { Garment, Supplier } from '../types';
+import { useIsMobile } from '../hooks/use-mobile';
 
 interface GarmentsTableProps {
   garments: Garment[];
@@ -36,6 +37,8 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
   adminMode = false,
   supplier
 }) => {
+  const isMobile = useIsMobile();
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -160,7 +163,9 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
                       className="text-green-600 border-green-600 hover:bg-green-50 text-xs px-2 py-1 h-auto min-h-[32px]"
                     >
                       <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="ml-1 hidden sm:inline">Vender</span>
+                      <span className="ml-1 hidden sm:inline">
+                        {isMobile ? 'Vendido' : 'Vender'}
+                      </span>
                     </Button>
                   )}
                   {garment.is_sold && garment.payment_status === 'pending' && !hideActions.includes('markAsPaid') && onMarkAsPaid && (
@@ -171,7 +176,9 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
                       className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs px-2 py-1 h-auto min-h-[32px]"
                     >
                       <DollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="ml-1 hidden sm:inline">Pagar</span>
+                      <span className="ml-1 hidden sm:inline">
+                        {isMobile ? 'Pagado' : 'Pagar'}
+                      </span>
                     </Button>
                   )}
                   <Button
