@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button';
 import { LogOut, BarChart3, Package } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Header = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useIsMobile();
 
   const handleSignOut = async () => {
     await signOut();
@@ -34,14 +36,16 @@ const Header = () => {
                 Proveedores
               </Button>
               
-              <Button
-                variant={isActive('/admin') ? 'default' : 'ghost'}
-                onClick={() => navigate('/admin')}
-                className="text-sm"
-              >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Administrador
-              </Button>
+              {!isMobile && (
+                <Button
+                  variant={isActive('/admin') ? 'default' : 'ghost'}
+                  onClick={() => navigate('/admin')}
+                  className="text-sm"
+                >
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Administrador
+                </Button>
+              )}
             </nav>
           </div>
           

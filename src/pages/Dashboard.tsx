@@ -2,6 +2,14 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Search } from 'lucide-react';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import Header from '../components/Header';
 import AddSupplierModal from '../components/AddSupplierModal';
 import SearchAndFilters from '../components/SearchAndFilters';
@@ -9,23 +17,37 @@ import SuppliersTable from '../components/SuppliersTable';
 import { useSupabaseData } from '../hooks/useSupabaseData';
 import { useNavigate } from 'react-router-dom';
 
+const ITEMS_PER_PAGE = 20;
+
 const Dashboard = () => {
   const { suppliers, loading } = useSupabaseData();
   const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [phoneFilter, setPhoneFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
 
   const filteredSuppliers = suppliers.filter(supplier => {
     const matchesSearch = supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          supplier.surname.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPhone = supplier.phone.includes(phoneFilter);
-    return matchesSearch && matchesPhone;
+    return matchesSearch;
   });
+
+  const totalPages = Math.ceil(filteredSuppliers.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedSuppliers = filteredSuppliers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const handleSupplierClick = (supplierId: string) => {
     navigate(`/supplier/${supplierId}`);
   };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Reset page when search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   if (loading) {
     return (
@@ -61,8 +83,7 @@ const Dashboard = () => {
           <SearchAndFilters
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
-            phoneFilter={phoneFilter}
-            onPhoneFilterChange={setPhoneFilter}
+            searchPlaceholder="Buscar por nombre o apellido..."
           />
 
           {filteredSuppliers.length === 0 ? (
@@ -85,10 +106,46 @@ const Dashboard = () => {
               )}
             </div>
           ) : (
-            <SuppliersTable 
-              suppliers={filteredSuppliers}
-              onSupplierClick={handleSupplierClick}
-            />
+            <div className="space-y-6">
+              <SuppliersTable 
+                suppliers={paginatedSuppliers}
+                onSupplierClick={handleSupplierClick}
+              />
+              
+              {totalPages > 1 && (
+                <div className="flex justify-center">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                          className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        />
+                      </PaginationItem>
+                      
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => handlePageChange(page)}
+                            isActive={currentPage === page}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                          className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </main>

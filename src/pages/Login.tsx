@@ -12,7 +12,6 @@ const Login = () => {
   const [email, setEmail] = useState('admin@consignapp.com');
   const [password, setPassword] = useState('password123');
   const [loading, setLoading] = useState(false);
-  const [isCreatingUsers, setIsCreatingUsers] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -24,44 +23,6 @@ const Login = () => {
       navigate('/dashboard', { replace: true });
     }
   }, [user, navigate]);
-
-  const createTestUsers = async () => {
-    setIsCreatingUsers(true);
-    console.log('Creating test users...');
-    
-    const testUsers = [
-      { email: 'admin@consignapp.com', password: 'password123' },
-      { email: 'vendedor1@consignapp.com', password: 'password123' },
-      { email: 'vendedor2@consignapp.com', password: 'password123' }
-    ];
-
-    for (const user of testUsers) {
-      try {
-        console.log(`Creating user: ${user.email}`);
-        const { error } = await supabase.auth.signUp({
-          email: user.email,
-          password: user.password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`
-          }
-        });
-
-        if (error && !error.message.includes('already registered')) {
-          console.error(`Error creating user ${user.email}:`, error);
-        } else {
-          console.log(`User ${user.email} created or already exists`);
-        }
-      } catch (error) {
-        console.error(`Exception creating user ${user.email}:`, error);
-      }
-    }
-
-    setIsCreatingUsers(false);
-    toast({
-      title: "Usuarios de prueba",
-      description: "Los usuarios de prueba han sido creados. Ahora puedes iniciar sesión.",
-    });
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,9 +41,9 @@ const Login = () => {
         let errorMessage = "Error durante el login";
         
         if (error.message.includes('Invalid login credentials')) {
-          errorMessage = "Credenciales inválidas. ¿Has creado los usuarios de prueba?";
+          errorMessage = "Credenciales inválidas";
         } else if (error.message.includes('Email not confirmed')) {
-          errorMessage = "Email no confirmado. Por favor confirma tu email o desactiva la confirmación en Supabase";
+          errorMessage = "Email no confirmado";
         } else {
           errorMessage = error.message;
         }
@@ -98,7 +59,6 @@ const Login = () => {
           title: "Login exitoso",
           description: "Bienvenido a ConsignApp",
         });
-        // Don't navigate here, let the useEffect handle it when user state updates
       }
     } catch (error) {
       console.error('Login exception:', error);
@@ -125,16 +85,6 @@ const Login = () => {
           <p className="text-center text-gray-600">Inicia sesión para continuar</p>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
-            <Button 
-              onClick={createTestUsers}
-              disabled={isCreatingUsers}
-              className="w-full bg-green-600 hover:bg-green-700 mb-4"
-            >
-              {isCreatingUsers ? 'Creando usuarios...' : 'Crear usuarios de prueba'}
-            </Button>
-          </div>
-
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -183,7 +133,7 @@ const Login = () => {
               >
                 <div className="flex flex-col items-start">
                   <span className="font-medium">Admin</span>
-                  <span className="text-xs text-gray-500">admin@consignapp.com</span>
+                  <span className="text-xs text-gray-500">admin@consignapp.com / password123</span>
                 </div>
               </Button>
               
@@ -195,7 +145,7 @@ const Login = () => {
               >
                 <div className="flex flex-col items-start">
                   <span className="font-medium">Vendedor 1</span>
-                  <span className="text-xs text-gray-500">vendedor1@consignapp.com</span>
+                  <span className="text-xs text-gray-500">vendedor1@consignapp.com / password123</span>
                 </div>
               </Button>
               
@@ -207,16 +157,10 @@ const Login = () => {
               >
                 <div className="flex flex-col items-start">
                   <span className="font-medium">Vendedor 2</span>
-                  <span className="text-xs text-gray-500">vendedor2@consignapp.com</span>
+                  <span className="text-xs text-gray-500">vendedor2@consignapp.com / password123</span>
                 </div>
               </Button>
             </div>
-          </div>
-
-          <div className="mt-4 p-3 bg-yellow-50 rounded-md">
-            <p className="text-xs text-yellow-700">
-              <strong>Importante:</strong> Primero haz clic en "Crear usuarios de prueba" para registrar los usuarios en Supabase Auth, luego podrás hacer login.
-            </p>
           </div>
         </CardContent>
       </Card>

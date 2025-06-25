@@ -1,8 +1,16 @@
 
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, ArrowLeft } from 'lucide-react';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import Header from '../components/Header';
 import SupplierInfo from '../components/SupplierInfo';
 import GarmentsTable from '../components/GarmentsTable';
@@ -10,11 +18,16 @@ import AddGarmentModal from '../components/AddGarmentModal';
 import SellConfirmDialog from '../components/SellConfirmDialog';
 import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
 import PaymentConfirmDialog from '../components/PaymentConfirmDialog';
-import MonthFilter from '../components/MonthFilter';
+import SearchAndFilters from '../components/SearchAndFilters';
 import { useSupabaseData } from '../hooks/useSupabaseData';
+import { useIsMobile } from '../hooks/use-mobile';
+
+const ITEMS_PER_PAGE = 20;
 
 const SupplierDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const {
     suppliers,
     getGarmentsBySupplier,
@@ -25,7 +38,11 @@ const SupplierDetail = () => {
   } = useSupabaseData();
   
   const [isAddGarmentOpen, setIsAddGarmentOpen] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sizeFilter, setSizeFilter] = useState('');
+  const [codeFilter, setCodeFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
   
   const [sellDialog, setSellDialog] = useState<{
     open: boolean;
@@ -48,14 +65,37 @@ const SupplierDetail = () => {
   const supplier = suppliers.find(s => s.id === id);
   const allGarments = id ? getGarmentsBySupplier(id) : [];
 
-  const filteredGarments = selectedMonth
-    ? allGarments.filter(garment => {
-        const garmentDate = new Date(garment.created_at);
-        const [year, month] = selectedMonth.split('-');
-        return garmentDate.getFullYear() === parseInt(year) && 
-               garmentDate.getMonth() === parseInt(month) - 1;
-      })
-    : allGarments;
+  const filteredGarments = allGarments.filter(garment => {
+    const matchesSearch = garment.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSize = !sizeFilter || garment.size.toLowerCase().includes(sizeFilter.toLowerCase());
+    const matchesCode = !codeFilter || garment.code.toLowerCase().includes(codeFilter.toLowerCase());
+    
+    let matchesStatus = true;
+    if (statusFilter === 'available') {
+      matchesStatus = !garment.is_sold;
+    } else if (statusFilter === 'sold') {
+      matchesStatus = garment.is_sold;
+    } else if (statusFilter === 'pending_payment') {
+      matchesStatus = garment.is_sold && garment.payment_status === 'pending';
+    } else if (statusFilter === 'paid') {
+      matchesStatus = garment.payment_status === 'paid';
+    }
+    
+    return matchesSearch && matchesSize && matchesCode && matchesStatus;
+  });
+
+  const totalPages = Math.ceil(filteredGarments.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedGarments = filteredGarments.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Reset page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, sizeFilter, codeFilter, statusFilter]);
 
   const handleSellClick = (garmentId: string, garmentName: string) => {
     setSellDialog({
@@ -129,6 +169,20 @@ const SupplierDetail = () => {
       
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
+          {isMobile && (
+            <div className="mb-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/dashboard')}
+                className="mb-4"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Volver a Proveedores
+              </Button>
+            </div>
+          )}
+          
           <SupplierInfo supplier={supplier} />
           
           <div className="bg-white shadow-sm rounded-lg mt-6">
@@ -140,29 +194,71 @@ const SupplierDetail = () => {
                     {filteredGarments.length} prendas encontradas
                   </p>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <MonthFilter
-                    selectedMonth={selectedMonth}
-                    onMonthChange={setSelectedMonth}
-                  />
-                  <Button
-                    onClick={() => setIsAddGarmentOpen(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Agregar Prenda
-                  </Button>
-                </div>
+                <Button
+                  onClick={() => setIsAddGarmentOpen(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Agregar Prenda
+                </Button>
               </div>
             </div>
-            
-            <GarmentsTable
-              garments={filteredGarments}
-              onMarkAsSold={handleSellClick}
-              onMarkAsPaid={handlePaymentClick}
-              onDelete={handleDeleteClick}
-              supplier={supplier}
-            />
+
+            <div className="p-6">
+              <SearchAndFilters
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                statusFilter={statusFilter}
+                onStatusFilterChange={setStatusFilter}
+                sizeFilter={sizeFilter}
+                onSizeFilterChange={setSizeFilter}
+                codeFilter={codeFilter}
+                onCodeFilterChange={setCodeFilter}
+                searchPlaceholder="Buscar por nombre de prenda..."
+              />
+              
+              <GarmentsTable
+                garments={paginatedGarments}
+                onMarkAsSold={handleSellClick}
+                onMarkAsPaid={handlePaymentClick}
+                onDelete={handleDeleteClick}
+                supplier={supplier}
+              />
+
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                          className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        />
+                      </PaginationItem>
+                      
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => handlePageChange(page)}
+                            isActive={currentPage === page}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                          className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </main>
