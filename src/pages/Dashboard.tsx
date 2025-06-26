@@ -1,58 +1,71 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Search } from 'lucide-react';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
+import { Plus, Users, Package, TrendingUp, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import AddSupplierModal from '../components/AddSupplierModal';
-import SearchAndFilters from '../components/SearchAndFilters';
 import SuppliersTable from '../components/SuppliersTable';
+import AddSupplierModal from '../components/AddSupplierModal';
+import DeleteSupplierDialog from '../components/DeleteSupplierDialog';
 import { useSupabaseData } from '../hooks/useSupabaseData';
-import { useNavigate } from 'react-router-dom';
-
-const ITEMS_PER_PAGE = 20;
+import { Supplier } from '../types';
 
 const Dashboard = () => {
-  const { suppliers, loading, deleteSupplier } = useSupabaseData();
-  const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
+  const navigate = useNavigate();
+  const {
+    suppliers,
+    garments,
+    userRole,
+    addSupplier,
+    deleteSupplier,
+    getAllSoldGarments,
+    loading
+  } = useSupabaseData();
+
+  const [showAddSupplier, setShowAddSupplier] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const navigate = useNavigate();
+  const itemsPerPage = 10;
 
-  const filteredSuppliers = suppliers.filter(supplier => {
-    const matchesSearch = supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         supplier.surname.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  });
-
-  const totalPages = Math.ceil(filteredSuppliers.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedSuppliers = filteredSuppliers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-  const handleSupplierClick = (supplierId: string) => {
-    navigate(`/supplier/${supplierId}`);
+  const handleDeleteSupplier = (supplier: Supplier) => {
+    setSelectedSupplier(supplier);
+    setShowDeleteDialog(true);
   };
 
-  const handleDeleteSupplier = (supplierId: string) => {
-    deleteSupplier(supplierId);
+  const handleConfirmDelete = async () => {
+    if (selectedSupplier) {
+      await deleteSupplier(selectedSupplier.id);
+      setShowDeleteDialog(false);
+      setSelectedSupplier(null);
+    }
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  const filteredSuppliers = suppliers.filter(supplier =>
+    `${supplier.name} ${supplier.surname}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    supplier.phone.includes(searchTerm)
+  );
 
-  // Reset page when search changes
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
+  // Paginación
+  const totalPages = Math.ceil(filteredSuppliers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentSuppliers = filteredSuppliers.slice(startIndex, endIndex);
+
+  // Estadísticas
+  const soldGarments = getAllSoldGarments();
+  const totalRevenue = soldGarments.reduce((sum, garment) => sum + garment.sale_price, 0);
+  const totalCost = soldGarments.reduce((sum, garment) => sum + garment.purchase_price, 0);
+  const totalProfit = totalRevenue - totalCost;
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS'
+    }).format(amount);
+  };
 
   if (loading) {
     return (
@@ -73,103 +86,159 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
       <Header />
       
-      <main className="flex-1 w-full max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Proveedores</h1>
-            <p className="text-gray-600 mt-1">Gestiona tus proveedores y sus prendas</p>
+      <main className="flex-1 w-full max-w-7xl mx-auto py-6 px-4 sm:px-6">
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-gray-600 mt-2">
+                Gestiona tus proveedores y supervisa el rendimiento de tu negocio
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              {userRole === 'admin' && (
+                <Button
+                  onClick={() => navigate('/admin')}
+                  variant="outline"
+                  className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Panel Admin
+                </Button>
+              )}
+              <Button onClick={() => setShowAddSupplier(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Agregar Proveedor
+              </Button>
+            </div>
           </div>
-          <Button
-            onClick={() => setIsAddSupplierOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Agregar Proveedor
-          </Button>
+
+          {/* Estadísticas generales */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Users className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Proveedores</p>
+                  <p className="text-2xl font-bold text-gray-900">{suppliers.length}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Package className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Prendas</p>
+                  <p className="text-2xl font-bold text-gray-900">{garments.length}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <TrendingUp className="w-6 h-6 text-purple-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Prendas Vendidas</p>
+                  <p className="text-2xl font-bold text-gray-900">{soldGarments.length}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <TrendingUp className="w-6 h-6 text-orange-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Ganancia Total</p>
+                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalProfit)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {filteredSuppliers.length === 0 ? (
-          <div className="text-center py-12">
-            <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">
-              {suppliers.length === 0 
-                ? 'No hay proveedores registrados'
-                : 'No se encontraron proveedores con los filtros aplicados'
-              }
-            </p>
-            {suppliers.length === 0 && (
-              <Button
-                onClick={() => setIsAddSupplierOpen(true)}
-                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar tu primer proveedor
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900">Proveedores ({filteredSuppliers.length})</h2>
+        {/* Tabla de proveedores */}
+        <div className="bg-white shadow-sm rounded-lg border overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Proveedores</h2>
+                <p className="text-gray-600 mt-1">
+                  {filteredSuppliers.length} proveedores registrados
+                </p>
               </div>
-              <div className="p-6">
-                <SearchAndFilters
-                  searchTerm={searchTerm}
-                  onSearchChange={setSearchTerm}
-                  searchPlaceholder="Buscar por nombre o apellido..."
-                />
-                
-                <SuppliersTable 
-                  suppliers={paginatedSuppliers}
-                  onSupplierClick={handleSupplierClick}
-                  onDeleteSupplier={handleDeleteSupplier}
+              <div className="flex-1 max-w-md">
+                <input
+                  type="text"
+                  placeholder="Buscar proveedores..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
-            
-            {totalPages > 1 && (
-              <div className="flex justify-center">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                        className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                      />
-                    </PaginationItem>
-                    
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => handlePageChange(page)}
-                          isActive={currentPage === page}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
-                    
-                    <PaginationItem>
-                      <PaginationNext 
-                        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                        className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            )}
           </div>
-        )}
+          
+          <div className="overflow-hidden">
+            <SuppliersTable
+              suppliers={currentSuppliers}
+              onView={(supplier) => navigate(`/supplier/${supplier.id}`)}
+              onDelete={handleDeleteSupplier}
+              garments={garments}
+            />
+          </div>
+
+          {/* Paginación */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 px-6 py-4 border-t border-gray-200">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(currentPage - 1)}
+              >
+                Anterior
+              </Button>
+              <span className="text-sm text-gray-600">
+                Página {currentPage} de {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(currentPage + 1)}
+              >
+                Siguiente
+              </Button>
+            </div>
+          )}
+        </div>
       </main>
 
       <Footer />
 
       <AddSupplierModal
-        isOpen={isAddSupplierOpen}
-        onClose={() => setIsAddSupplierOpen(false)}
+        isOpen={showAddSupplier}
+        onClose={() => setShowAddSupplier(false)}
+        onSubmit={addSupplier}
+      />
+
+      <DeleteSupplierDialog
+        isOpen={showDeleteDialog}
+        onClose={() => {
+          setShowDeleteDialog(false);
+          setSelectedSupplier(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        supplierName={selectedSupplier ? `${selectedSupplier.name} ${selectedSupplier.surname}` : ''}
       />
     </div>
   );
