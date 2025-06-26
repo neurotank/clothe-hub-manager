@@ -40,7 +40,7 @@ const AdminDashboard = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [monthFilter, setMonthFilter] = useState<string | null>(null);
+  const [monthFilter, setMonthFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
 
   const [sellDialog, setSellDialog] = useState<{
@@ -180,7 +180,7 @@ const AdminDashboard = () => {
   };
 
   const handleMonthFilterChange = (month: string) => {
-    setMonthFilter(month === 'all' ? null : month);
+    setMonthFilter(month);
   };
 
   if (loading) {
@@ -208,7 +208,8 @@ const AdminDashboard = () => {
       (statusFilter === 'paid' && garment.payment_status === 'paid');
 
     const matchesMonth = 
-      monthFilter === null || new Date(garment.created_at).getMonth() + 1 === parseInt(monthFilter);
+      monthFilter === 'all' || 
+      new Date(garment.created_at).toISOString().substring(0, 7) === monthFilter;
 
     return matchesSearch && matchesStatus && matchesMonth;
   });
@@ -276,7 +277,7 @@ const AdminDashboard = () => {
             )}
           </h1>
           <div className="flex items-center space-x-2">
-            <MonthFilter month={monthFilter} onMonthChange={handleMonthFilterChange} />
+            <MonthFilter selectedMonth={monthFilter} onMonthChange={handleMonthFilterChange} />
             <Button className="bg-blue-600 hover:bg-blue-700 text-white">
               <Plus className="w-4 h-4 mr-2" />
               Agregar Prenda
@@ -309,7 +310,7 @@ const AdminDashboard = () => {
                 <PaginationItem>
                   <PaginationPrevious
                     onClick={() => currentPage > 1 && setCurrentPage(Math.max(1, currentPage - 1))}
-                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    className={currentPage === 1 ? 'pointer-events-none opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                   />
                 </PaginationItem>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
@@ -325,7 +326,7 @@ const AdminDashboard = () => {
                 <PaginationItem>
                   <PaginationNext
                     onClick={() => currentPage < totalPages && setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    className={currentPage === totalPages ? 'pointer-events-none opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                   />
                 </PaginationItem>
               </PaginationContent>
