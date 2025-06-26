@@ -313,45 +313,44 @@ const SupplierDetail = () => {
       <AddGarmentModal
         isOpen={showAddGarment}
         onClose={() => setShowAddGarment(false)}
-        onSubmit={addGarment}
         supplier={supplier}
       />
 
       <SellConfirmDialog
-        isOpen={showSellDialog}
-        onClose={() => {
-          setShowSellDialog(false);
-          setSelectedGarment(null);
+        open={showSellDialog}
+        onOpenChange={(open) => {
+          setShowSellDialog(open);
+          if (!open) setSelectedGarment(null);
         }}
         onConfirm={handleConfirmSell}
-        garmentName={selectedGarment?.name || ''}
+        itemName={selectedGarment?.name || ''}
       />
 
       <PaymentConfirmDialog
-        isOpen={showPaymentDialog}
-        onClose={() => {
-          setShowPaymentDialog(false);
-          setSelectedGarment(null);
+        open={showPaymentDialog}
+        onOpenChange={(open) => {
+          setShowPaymentDialog(open);
+          if (!open) setSelectedGarment(null);
         }}
         onConfirm={handleConfirmPayment}
-        garmentName={selectedGarment?.name || ''}
+        itemName={selectedGarment?.name || ''}
       />
 
       <DeleteConfirmDialog
-        isOpen={showDeleteDialog}
-        onClose={() => {
-          setShowDeleteDialog(false);
-          setSelectedGarment(null);
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          setShowDeleteDialog(open);
+          if (!open) setSelectedGarment(null);
         }}
         onConfirm={handleConfirmDelete}
-        garmentName={selectedGarment?.name || ''}
+        itemName={selectedGarment?.name || ''}
       />
 
       <EditGarmentModal
-        isOpen={showEditDialog}
-        onClose={() => {
-          setShowEditDialog(false);
-          setSelectedGarment(null);
+        open={showEditDialog}
+        onOpenChange={(open) => {
+          setShowEditDialog(open);
+          if (!open) setSelectedGarment(null);
         }}
         onSubmit={handleConfirmEdit}
         garment={selectedGarment}

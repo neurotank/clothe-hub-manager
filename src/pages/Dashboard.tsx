@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Users, Package, TrendingUp, Settings } from 'lucide-react';
@@ -30,9 +29,12 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const handleDeleteSupplier = (supplier: Supplier) => {
-    setSelectedSupplier(supplier);
-    setShowDeleteDialog(true);
+  const handleDeleteSupplier = (supplierId: string) => {
+    const supplier = suppliers.find(s => s.id === supplierId);
+    if (supplier) {
+      setSelectedSupplier(supplier);
+      setShowDeleteDialog(true);
+    }
   };
 
   const handleConfirmDelete = async () => {
@@ -190,9 +192,8 @@ const Dashboard = () => {
           <div className="overflow-hidden">
             <SuppliersTable
               suppliers={currentSuppliers}
-              onView={(supplier) => navigate(`/supplier/${supplier.id}`)}
-              onDelete={handleDeleteSupplier}
-              garments={garments}
+              onSupplierClick={(supplierId) => navigate(`/supplier/${supplierId}`)}
+              onDeleteSupplier={handleDeleteSupplier}
             />
           </div>
 
@@ -228,14 +229,13 @@ const Dashboard = () => {
       <AddSupplierModal
         isOpen={showAddSupplier}
         onClose={() => setShowAddSupplier(false)}
-        onSubmit={addSupplier}
       />
 
       <DeleteSupplierDialog
-        isOpen={showDeleteDialog}
-        onClose={() => {
-          setShowDeleteDialog(false);
-          setSelectedSupplier(null);
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          setShowDeleteDialog(open);
+          if (!open) setSelectedSupplier(null);
         }}
         onConfirm={handleConfirmDelete}
         supplierName={selectedSupplier ? `${selectedSupplier.name} ${selectedSupplier.surname}` : ''}
