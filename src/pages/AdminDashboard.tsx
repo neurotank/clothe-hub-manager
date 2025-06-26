@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -223,7 +224,7 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
       
-      <main className="flex-1 max-w-7xl mx-auto px-4 py-6 sm:px-6">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Card className="bg-blue-50 text-blue-900 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -267,7 +268,7 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-2xl font-bold text-gray-900">
             Administrar Prendas
             {totalGarments !== garments.length && (
@@ -276,7 +277,7 @@ const AdminDashboard = () => {
               </span>
             )}
           </h1>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
             <MonthFilter selectedMonth={monthFilter} onMonthChange={handleMonthFilterChange} />
             <Button className="bg-blue-600 hover:bg-blue-700 text-white">
               <Plus className="w-4 h-4 mr-2" />
@@ -285,23 +286,27 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <SearchAndFilters
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-        />
+        <div className="mb-6">
+          <SearchAndFilters
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+          />
+        </div>
         
-        <GarmentsTable 
-          garments={paginatedGarments}
-          onMarkAsSold={handleSellClick}
-          onMarkAsPaid={handlePaymentClick}
-          onDelete={handleDeleteClick}
-          onEdit={handleEditClick}
-          suppliers={suppliers}
-          showSupplierColumn={true}
-          adminMode={true}
-        />
+        <div className="bg-white rounded-lg shadow-sm border mb-6">
+          <GarmentsTable 
+            garments={paginatedGarments}
+            onMarkAsSold={handleSellClick}
+            onMarkAsPaid={handlePaymentClick}
+            onDelete={handleDeleteClick}
+            onEdit={handleEditClick}
+            suppliers={suppliers}
+            showSupplierColumn={true}
+            adminMode={true}
+          />
+        </div>
         
         {totalPages > 1 && (
           <div className="flex justify-center mt-6">
