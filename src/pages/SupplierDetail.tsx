@@ -234,7 +234,7 @@ const SupplierDetail = () => {
           <div className="md:w-1/2 md:text-right">
             <Button
               onClick={() => setIsAddGarmentOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-blue-600 hover:bg-blue-700 text-white mt-4 md:mt-0"
             >
               <Plus className="w-4 h-4 mr-2" />
               Agregar Prenda
@@ -262,14 +262,24 @@ const SupplierDetail = () => {
                 <AddGarmentModal supplierId={id!} onAddGarment={addGarment} />
               </div>
             ) : (
-              <GarmentsTable 
-                garments={filteredGarments}
-                onMarkAsSold={handleSellClick}
-                onMarkAsPaid={handlePaymentClick}
-                onDelete={handleDeleteClick}
-                onEdit={handleEditClick}
-                supplier={supplier}
-              />
+              <>
+                <SearchAndFilters
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  statusFilter={statusFilter}
+                  onStatusFilterChange={setStatusFilter}
+                  searchPlaceholder="Buscar por código o nombre..."
+                />
+                
+                <GarmentsTable 
+                  garments={filteredGarments}
+                  onMarkAsSold={handleSellClick}
+                  onMarkAsPaid={handlePaymentClick}
+                  onDelete={handleDeleteClick}
+                  onEdit={handleEditClick}
+                  supplier={supplier}
+                />
+              </>
             )}
           </CardContent>
         </Card>

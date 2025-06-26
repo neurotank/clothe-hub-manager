@@ -7,6 +7,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import GarmentsTable from '../components/GarmentsTable';
 import MonthFilter from '../components/MonthFilter';
+import SearchAndFilters from '../components/SearchAndFilters';
 import { useSupabaseData } from '../hooks/useSupabaseData';
 import { useIsMobile } from '../hooks/use-mobile';
 
@@ -22,17 +23,30 @@ const AdminDashboard = () => {
   } = useSupabaseData();
   
   const [selectedMonth, setSelectedMonth] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
 
   const allSoldGarments = getAllSoldGarments();
 
-  const filteredGarments = selectedMonth
-    ? allSoldGarments.filter(garment => {
-        const soldDate = garment.sold_at ? new Date(garment.sold_at) : new Date(garment.created_at);
-        const [year, month] = selectedMonth.split('-');
-        return soldDate.getFullYear() === parseInt(year) && 
-               soldDate.getMonth() === parseInt(month) - 1;
-      })
-    : allSoldGarments;
+  const filteredGarments = allSoldGarments.filter(garment => {
+    const soldDate = garment.sold_at ? new Date(garment.sold_at) : new Date(garment.created_at);
+    const matchesMonth = selectedMonth ? (() => {
+      const [year, month] = selectedMonth.split('-');
+      return soldDate.getFullYear() === parseInt(year) && 
+             soldDate.getMonth() === parseInt(month) - 1;
+    })() : true;
+
+    const matchesSearch = 
+      garment.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      garment.name.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = 
+      statusFilter === 'all' ||
+      (statusFilter === 'pending_payment' && garment.payment_status === 'pending') ||
+      (statusFilter === 'paid' && garment.payment_status === 'paid');
+
+    return matchesMonth && matchesSearch && matchesStatus;
+  });
 
   const totalRevenue = filteredGarments.reduce((sum, garment) => sum + garment.sale_price, 0);
   const totalCost = filteredGarments.reduce((sum, garment) => sum + garment.purchase_price, 0);
@@ -134,46 +148,12 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Acciones rápidas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Acciones Rápidas</h3>
-            <div className="space-y-3">
-              <Button
-                onClick={() => navigate('/admin/sold-garments')}
-                className="w-full justify-start"
-                variant="outline"
-              >
-                <Package className="w-4 h-4 mr-2" />
-                Ver Todas las Prendas Vendidas ({allSoldGarments.length})
-              </Button>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Pagos Pendientes</h3>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-yellow-600 mb-2">{pendingPayments}</div>
-              <p className="text-gray-600 text-sm">prendas con pago pendiente</p>
-              {pendingPayments > 0 && (
-                <Button
-                  onClick={() => navigate('/admin/sold-garments')}
-                  className="mt-3"
-                  size="sm"
-                >
-                  Gestionar Pagos
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-
         <div className="bg-white shadow-sm rounded-lg border overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">
-                  Últimas Prendas Vendidas
+                  Prendas Vendidas
                 </h2>
                 <p className="text-gray-600 mt-1">
                   {filteredGarments.length} prendas encontradas
@@ -186,14 +166,24 @@ const AdminDashboard = () => {
             </div>
           </div>
           
-          <GarmentsTable
-            garments={filteredGarments.slice(0, 10)}
-            onMarkAsPaid={markAsPaid}
-            onDelete={deleteGarment}
-            suppliers={suppliers}
-            showSupplierColumn={true}
-            adminMode={true}
-          />
+          <div className="p-6">
+            <SearchAndFilters
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              searchPlaceholder="Buscar por código o nombre..."
+            />
+            
+            <GarmentsTable
+              garments={filteredGarments.slice(0, 10)}
+              onMarkAsPaid={markAsPaid}
+              onDelete={deleteGarment}
+              suppliers={suppliers}
+              showSupplierColumn={true}
+              adminMode={true}
+            />
+          </div>
           
           {filteredGarments.length > 10 && (
             <div className="px-6 py-4 border-t border-gray-200 text-center">

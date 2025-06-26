@@ -105,7 +105,7 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
               {garments.map((garment) => (
                 <TableRow 
                   key={garment.id} 
-                  className={`hover:bg-gray-50 ${garment.is_sold ? 'opacity-60' : ''}`}
+                  className={`hover:bg-gray-50 ${garment.is_sold && garment.payment_status === 'paid' ? 'opacity-60' : ''}`}
                 >
                   <TableCell className="font-medium">
                     <div>
