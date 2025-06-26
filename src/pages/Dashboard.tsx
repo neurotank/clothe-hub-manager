@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Users, Package, TrendingUp, Settings } from 'lucide-react';
+import { Plus, Users, Package, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -15,7 +16,6 @@ const Dashboard = () => {
   const {
     suppliers,
     garments,
-    userRole,
     addSupplier,
     deleteSupplier,
     getAllSoldGarments,
@@ -98,16 +98,6 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
-              {userRole === 'admin' && (
-                <Button
-                  onClick={() => navigate('/admin')}
-                  variant="outline"
-                  className="border-blue-600 text-blue-600 hover:bg-blue-50"
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Panel Admin
-                </Button>
-              )}
               <Button onClick={() => setShowAddSupplier(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Agregar Proveedor

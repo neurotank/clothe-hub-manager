@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Package, DollarSign, TrendingUp, Plus } from 'lucide-react';
+import { ArrowLeft, Package, Plus } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import SupplierInfo from '../components/SupplierInfo';
@@ -161,18 +162,6 @@ const SupplierDetail = () => {
     }
   };
 
-  const soldGarments = supplierGarments.filter(g => g.is_sold);
-  const totalRevenue = soldGarments.reduce((sum, garment) => sum + garment.sale_price, 0);
-  const totalCost = soldGarments.reduce((sum, garment) => sum + garment.purchase_price, 0);
-  const totalProfit = totalRevenue - totalCost;
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS'
-    }).format(amount);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
       <Header />
@@ -212,40 +201,14 @@ const SupplierDetail = () => {
           </div>
           
           <div className="lg:col-span-3">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <div className="flex items-center">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Package className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Total Prendas</p>
-                    <p className="text-2xl font-bold text-gray-900">{supplierGarments.length}</p>
-                  </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Package className="w-6 h-6 text-blue-600" />
                 </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <DollarSign className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Ingresos</p>
-                    <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <div className="flex items-center">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <TrendingUp className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Ganancia</p>
-                    <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalProfit)}</p>
-                  </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Prendas</p>
+                  <p className="text-2xl font-bold text-gray-900">{supplierGarments.length}</p>
                 </div>
               </div>
             </div>
