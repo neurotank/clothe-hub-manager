@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Users, Package, TrendingUp } from 'lucide-react';
+import { Plus, Users, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -18,7 +18,6 @@ const Dashboard = () => {
     garments,
     addSupplier,
     deleteSupplier,
-    getAllSoldGarments,
     loading
   } = useSupabaseData();
 
@@ -56,19 +55,6 @@ const Dashboard = () => {
   const endIndex = startIndex + itemsPerPage;
   const currentSuppliers = filteredSuppliers.slice(startIndex, endIndex);
 
-  // Estadísticas
-  const soldGarments = getAllSoldGarments();
-  const totalRevenue = soldGarments.reduce((sum, garment) => sum + garment.sale_price, 0);
-  const totalCost = soldGarments.reduce((sum, garment) => sum + garment.purchase_price, 0);
-  const totalProfit = totalRevenue - totalCost;
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS'
-    }).format(amount);
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -105,8 +91,8 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Estadísticas generales */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Estadísticas generales - solo proveedores y total prendas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div className="bg-white p-6 rounded-lg shadow-sm border">
               <div className="flex items-center">
                 <div className="p-2 bg-blue-100 rounded-lg">
@@ -127,30 +113,6 @@ const Dashboard = () => {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Prendas</p>
                   <p className="text-2xl font-bold text-gray-900">{garments.length}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <TrendingUp className="w-6 h-6 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Prendas Vendidas</p>
-                  <p className="text-2xl font-bold text-gray-900">{soldGarments.length}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <div className="flex items-center">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <TrendingUp className="w-6 h-6 text-orange-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Ganancia Total</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalProfit)}</p>
                 </div>
               </div>
             </div>

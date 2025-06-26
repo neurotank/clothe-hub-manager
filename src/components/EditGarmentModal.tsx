@@ -37,7 +37,7 @@ interface EditGarmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   garment: Garment | null;
-  onEditGarment: (garmentId: string, garmentData: FormData) => Promise<void>;
+  onEditGarment: (garmentData: FormData) => Promise<void>;
 }
 
 const EditGarmentModal: React.FC<EditGarmentModalProps> = ({
@@ -76,7 +76,7 @@ const EditGarmentModal: React.FC<EditGarmentModalProps> = ({
     
     setIsSubmitting(true);
     try {
-      await onEditGarment(garment.id, data);
+      await onEditGarment(data);
       onOpenChange(false);
       form.reset();
     } catch (error) {
