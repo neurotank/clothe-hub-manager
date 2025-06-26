@@ -15,14 +15,14 @@ interface PaymentConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
-  garmentName: string;
+  itemName: string;
 }
 
 const PaymentConfirmDialog: React.FC<PaymentConfirmDialogProps> = ({
   open,
   onOpenChange,
   onConfirm,
-  garmentName
+  itemName
 }) => {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -30,7 +30,7 @@ const PaymentConfirmDialog: React.FC<PaymentConfirmDialogProps> = ({
         <AlertDialogHeader>
           <AlertDialogTitle>¿Confirmar pago?</AlertDialogTitle>
           <AlertDialogDescription>
-            ¿Está seguro que desea marcar como pagada la prenda "{garmentName}"?
+            ¿Está seguro que desea marcar como pagada la prenda "{itemName}"?
             Esta acción confirmará que se ha recibido el pago.
           </AlertDialogDescription>
         </AlertDialogHeader>

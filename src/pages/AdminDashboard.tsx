@@ -40,7 +40,7 @@ const AdminDashboard = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [monthFilter, setMonthFilter] = useState<number | null>(null);
+  const [monthFilter, setMonthFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
 
   const [sellDialog, setSellDialog] = useState<{
@@ -179,6 +179,10 @@ const AdminDashboard = () => {
     setDeleteDialog({ open: false, garmentId: null, garmentName: '' });
   };
 
+  const handleMonthFilterChange = (month: string) => {
+    setMonthFilter(month === 'all' ? null : month);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -204,7 +208,7 @@ const AdminDashboard = () => {
       (statusFilter === 'paid' && garment.payment_status === 'paid');
 
     const matchesMonth = 
-      monthFilter === null || new Date(garment.created_at).getMonth() + 1 === monthFilter;
+      monthFilter === null || new Date(garment.created_at).getMonth() + 1 === parseInt(monthFilter);
 
     return matchesSearch && matchesStatus && matchesMonth;
   });
@@ -272,7 +276,7 @@ const AdminDashboard = () => {
             )}
           </h1>
           <div className="flex items-center space-x-2">
-            <MonthFilter month={monthFilter} onMonthChange={setMonthFilter} />
+            <MonthFilter month={monthFilter} onMonthChange={handleMonthFilterChange} />
             <Button className="bg-blue-600 hover:bg-blue-700 text-white">
               <Plus className="w-4 h-4 mr-2" />
               Agregar Prenda
@@ -304,8 +308,8 @@ const AdminDashboard = () => {
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
+                    onClick={() => currentPage > 1 && setCurrentPage(Math.max(1, currentPage - 1))}
+                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                   />
                 </PaginationItem>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
@@ -320,8 +324,8 @@ const AdminDashboard = () => {
                 ))}
                 <PaginationItem>
                   <PaginationNext
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
+                    onClick={() => currentPage < totalPages && setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                   />
                 </PaginationItem>
               </PaginationContent>

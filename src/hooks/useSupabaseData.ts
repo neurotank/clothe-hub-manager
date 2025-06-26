@@ -402,6 +402,43 @@ export const useSupabaseData = () => {
     }
   };
 
+  const updateGarment = async (garmentId: string, updates: any) => {
+    try {
+      console.log('Updating garment:', garmentId, updates);
+
+      const { data, error } = await supabase
+        .from('garments')
+        .update(updates)
+        .eq('id', garmentId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating garment:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo actualizar la prenda",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Prenda actualizada correctamente",
+      });
+      
+      // The real-time subscription will handle the update
+    } catch (error) {
+      console.error('Exception updating garment:', error);
+      toast({
+        title: "Error",
+        description: "Error inesperado al actualizar prenda",
+        variant: "destructive",
+      });
+    }
+  };
+
   const markAsSold = async (garmentId: string, garmentName: string) => {
     try {
       // Get garment and supplier info for WhatsApp
@@ -559,6 +596,7 @@ Tu prenda "${garment.name}" se ha vendido exitosamente.
     deleteSupplier,
     addGarment,
     editGarment,
+    updateGarment,
     markAsSold,
     markAsPaid,
     deleteGarment,
