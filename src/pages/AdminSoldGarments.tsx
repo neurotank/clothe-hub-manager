@@ -48,14 +48,14 @@ const AdminSoldGarments = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
       <Header />
       
       <main className="flex-1 w-full max-w-7xl mx-auto py-6 px-4 sm:px-6">
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
           <Button
             variant="outline"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/admin')}
             className="w-fit"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -69,7 +69,7 @@ const AdminSoldGarments = () => {
           </div>
         </div>
 
-        <div className="bg-white shadow-sm rounded-lg border">
+        <div className="bg-white shadow-sm rounded-lg border overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>

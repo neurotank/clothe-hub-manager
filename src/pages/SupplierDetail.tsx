@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -218,10 +219,10 @@ const SupplierDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
       <Header />
       
-      <main className="flex-1 max-w-7xl mx-auto px-4 py-6 sm:px-6">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 sm:px-6">
         <div className="md:flex md:items-center md:justify-between mb-6">
           <div className="md:w-1/2">
             <Button onClick={handleGoBack} variant="ghost" className="mb-4 md:mb-0">
@@ -241,7 +242,7 @@ const SupplierDetail = () => {
           </div>
         </div>
         
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle>
               Prendas del Proveedor

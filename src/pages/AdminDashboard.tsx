@@ -1,187 +1,49 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Users, 
-  Package, 
-  DollarSign, 
-  TrendingUp,
-  Calendar,
-  Plus,
-  Search
-} from 'lucide-react';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
+import { ArrowLeft, Package, DollarSign, TrendingUp, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import GarmentsTable from '../components/GarmentsTable';
-import EditGarmentModal from '../components/EditGarmentModal';
-import SellConfirmDialog from '../components/SellConfirmDialog';
-import PaymentConfirmDialog from '../components/PaymentConfirmDialog';
-import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
-import SearchAndFilters from '../components/SearchAndFilters';
 import MonthFilter from '../components/MonthFilter';
 import { useSupabaseData } from '../hooks/useSupabaseData';
-import { useToast } from '@/hooks/use-toast';
-import { Garment } from '../types';
-
-const ITEMS_PER_PAGE = 10;
+import { useIsMobile } from '../hooks/use-mobile';
 
 const AdminDashboard = () => {
-  const { suppliers, garments, loading, updateGarment, deleteGarment, editGarment } = useSupabaseData();
-  const { toast } = useToast();
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [monthFilter, setMonthFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
-
-  const [sellDialog, setSellDialog] = useState<{
-    open: boolean;
-    garmentId: string | null;
-    garmentName: string;
-  }>({ open: false, garmentId: null, garmentName: '' });
-
-  const [paymentDialog, setPaymentDialog] = useState<{
-    open: boolean;
-    garmentId: string | null;
-    garmentName: string;
-  }>({ open: false, garmentId: null, garmentName: '' });
-
-  const [deleteDialog, setDeleteDialog] = useState<{
-    open: boolean;
-    garmentId: string | null;
-    garmentName: string;
-  }>({ open: false, garmentId: null, garmentName: '' });
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const {
+    suppliers,
+    getAllSoldGarments,
+    markAsPaid,
+    deleteGarment,
+    loading
+  } = useSupabaseData();
   
-  const [editGarmentModal, setEditGarmentModal] = useState<{
-    open: boolean;
-    garment: Garment | null;
-  }>({ open: false, garment: null });
+  const [selectedMonth, setSelectedMonth] = useState('');
 
-  const handleEditClick = (garment: Garment) => {
-    setEditGarmentModal({
-      open: true,
-      garment
-    });
-  };
+  const allSoldGarments = getAllSoldGarments();
 
-  const handleEditGarment = async (garmentId: string, garmentData: any) => {
-    try {
-      await editGarment(garmentId, garmentData);
-      toast({
-        title: "Prenda editada",
-        description: "La prenda se editó exitosamente",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo editar la prenda",
-        variant: "destructive",
-      });
-    }
-  };
+  const filteredGarments = selectedMonth
+    ? allSoldGarments.filter(garment => {
+        const soldDate = garment.sold_at ? new Date(garment.sold_at) : new Date(garment.created_at);
+        const [year, month] = selectedMonth.split('-');
+        return soldDate.getFullYear() === parseInt(year) && 
+               soldDate.getMonth() === parseInt(month) - 1;
+      })
+    : allSoldGarments;
 
-  const handleSellClick = (garmentId: string, garmentName: string) => {
-    setSellDialog({
-      open: true,
-      garmentId,
-      garmentName
-    });
-  };
+  const totalRevenue = filteredGarments.reduce((sum, garment) => sum + garment.sale_price, 0);
+  const totalCost = filteredGarments.reduce((sum, garment) => sum + garment.purchase_price, 0);
+  const totalProfit = totalRevenue - totalCost;
+  const pendingPayments = filteredGarments.filter(g => g.payment_status === 'pending').length;
 
-  const handleSellConfirm = async () => {
-    if (!sellDialog.garmentId) return;
-
-    try {
-      await updateGarment(sellDialog.garmentId, {
-        is_sold: true,
-        sold_at: new Date().toISOString(),
-        payment_status: 'pending'
-      });
-      toast({
-        title: "Prenda vendida",
-        description: `${sellDialog.garmentName} marcada como vendida`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo marcar la prenda como vendida",
-        variant: "destructive",
-      });
-    }
-
-    setSellDialog({ open: false, garmentId: null, garmentName: '' });
-  };
-
-  const handlePaymentClick = (garmentId: string, garmentName: string) => {
-    setPaymentDialog({
-      open: true,
-      garmentId,
-      garmentName
-    });
-  };
-
-  const handlePaymentConfirm = async () => {
-    if (!paymentDialog.garmentId) return;
-
-    try {
-      await updateGarment(paymentDialog.garmentId, {
-        payment_status: 'paid'
-      });
-      toast({
-        title: "Pago confirmado",
-        description: `Se registró el pago de ${paymentDialog.garmentName}`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo registrar el pago",
-        variant: "destructive",
-      });
-    }
-
-    setPaymentDialog({ open: false, garmentId: null, garmentName: '' });
-  };
-
-  const handleDeleteClick = (garmentId: string, garmentName: string) => {
-    setDeleteDialog({
-      open: true,
-      garmentId,
-      garmentName
-    });
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!deleteDialog.garmentId) return;
-
-    try {
-      await deleteGarment(deleteDialog.garmentId);
-      toast({
-        title: "Prenda eliminada",
-        description: `${deleteDialog.garmentName} eliminada del inventario`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la prenda",
-        variant: "destructive",
-      });
-    }
-    
-    setDeleteDialog({ open: false, garmentId: null, garmentName: '' });
-  };
-
-  const handleMonthFilterChange = (month: string) => {
-    setMonthFilter(month);
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS'
+    }).format(amount);
   };
 
   if (loading) {
@@ -189,186 +51,164 @@ const AdminDashboard = () => {
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">Cargando...</div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando datos...</p>
+          </div>
         </div>
         <Footer />
       </div>
     );
   }
 
-  const filteredGarments = garments.filter(garment => {
-    const matchesSearch = 
-      garment.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      garment.name.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = 
-      statusFilter === 'all' ||
-      (statusFilter === 'available' && !garment.is_sold) ||
-      (statusFilter === 'sold' && garment.is_sold) ||
-      (statusFilter === 'pending_payment' && garment.payment_status === 'pending') ||
-      (statusFilter === 'paid' && garment.payment_status === 'paid');
-
-    const matchesMonth = 
-      monthFilter === 'all' || 
-      new Date(garment.created_at).toISOString().substring(0, 7) === monthFilter;
-
-    return matchesSearch && matchesStatus && matchesMonth;
-  });
-
-  const totalGarments = filteredGarments.length;
-  const totalPages = Math.ceil(totalGarments / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedGarments = filteredGarments.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
       <Header />
       
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 sm:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <Card className="bg-blue-50 text-blue-900 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Usuarios</CardTitle>
-              <Users className="h-4 w-4 text-blue-700" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">24</div>
-              <p className="text-blue-700 text-sm">+12% este mes</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-green-50 text-green-900 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Prendas en Stock</CardTitle>
-              <Package className="h-4 w-4 text-green-700" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{garments.filter(g => !g.is_sold).length}</div>
-              <p className="text-green-700 text-sm">+8% este mes</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-yellow-50 text-yellow-900 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ingresos</CardTitle>
-              <DollarSign className="h-4 w-4 text-yellow-700" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">$45,231.89</div>
-              <p className="text-yellow-700 text-sm">+19% este mes</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-red-50 text-red-900 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ventas</CardTitle>
-              <TrendingUp className="h-4 w-4 text-red-700" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">201</div>
-              <p className="text-red-700 text-sm">+3% este mes</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Administrar Prendas
-            {totalGarments !== garments.length && (
-              <span className="text-sm font-normal text-gray-500 ml-2">
-                ({totalGarments} de {garments.length})
-              </span>
-            )}
-          </h1>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-            <MonthFilter selectedMonth={monthFilter} onMonthChange={handleMonthFilterChange} />
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Plus className="w-4 h-4 mr-2" />
-              Agregar Prenda
-            </Button>
+      <main className="flex-1 w-full max-w-7xl mx-auto py-6 px-4 sm:px-6">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/dashboard')}
+            className="w-fit"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Volver
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-gray-900">Panel de Administración</h1>
+            <p className="text-gray-600 mt-1">
+              Resumen de ventas y métricas de negocio
+            </p>
           </div>
         </div>
 
-        <div className="mb-6">
-          <SearchAndFilters
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-          />
+        {/* Métricas principales */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <DollarSign className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Ingresos Totales</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Ganancia</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalProfit)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Package className="w-6 h-6 text-purple-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Prendas Vendidas</p>
+                <p className="text-2xl font-bold text-gray-900">{filteredGarments.length}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center">
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <Users className="w-6 h-6 text-orange-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Proveedores</p>
+                <p className="text-2xl font-bold text-gray-900">{suppliers.length}</p>
+              </div>
+            </div>
+          </div>
         </div>
-        
-        <div className="bg-white rounded-lg shadow-sm border mb-6">
-          <GarmentsTable 
-            garments={paginatedGarments}
-            onMarkAsSold={handleSellClick}
-            onMarkAsPaid={handlePaymentClick}
-            onDelete={handleDeleteClick}
-            onEdit={handleEditClick}
+
+        {/* Acciones rápidas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Acciones Rápidas</h3>
+            <div className="space-y-3">
+              <Button
+                onClick={() => navigate('/admin/sold-garments')}
+                className="w-full justify-start"
+                variant="outline"
+              >
+                <Package className="w-4 h-4 mr-2" />
+                Ver Todas las Prendas Vendidas ({allSoldGarments.length})
+              </Button>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Pagos Pendientes</h3>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-yellow-600 mb-2">{pendingPayments}</div>
+              <p className="text-gray-600 text-sm">prendas con pago pendiente</p>
+              {pendingPayments > 0 && (
+                <Button
+                  onClick={() => navigate('/admin/sold-garments')}
+                  className="mt-3"
+                  size="sm"
+                >
+                  Gestionar Pagos
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white shadow-sm rounded-lg border overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Últimas Prendas Vendidas
+                </h2>
+                <p className="text-gray-600 mt-1">
+                  {filteredGarments.length} prendas encontradas
+                </p>
+              </div>
+              <MonthFilter
+                selectedMonth={selectedMonth}
+                onMonthChange={setSelectedMonth}
+              />
+            </div>
+          </div>
+          
+          <GarmentsTable
+            garments={filteredGarments.slice(0, 10)}
+            onMarkAsPaid={markAsPaid}
+            onDelete={deleteGarment}
             suppliers={suppliers}
             showSupplierColumn={true}
             adminMode={true}
           />
+          
+          {filteredGarments.length > 10 && (
+            <div className="px-6 py-4 border-t border-gray-200 text-center">
+              <Button
+                onClick={() => navigate('/admin/sold-garments')}
+                variant="outline"
+              >
+                Ver todas las prendas vendidas
+              </Button>
+            </div>
+          )}
         </div>
-        
-        {totalPages > 1 && (
-          <div className="flex justify-center mt-6">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => currentPage > 1 && setCurrentPage(Math.max(1, currentPage - 1))}
-                    className={currentPage === 1 ? 'pointer-events-none opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                  />
-                </PaginationItem>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      isActive={currentPage === page}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => currentPage < totalPages && setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    className={currentPage === totalPages ? 'pointer-events-none opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
       </main>
-
-      <Footer />
-
-      <SellConfirmDialog
-        open={sellDialog.open}
-        onOpenChange={(open) => setSellDialog(prev => ({ ...prev, open }))}
-        onConfirm={handleSellConfirm}
-        itemName={sellDialog.garmentName}
-      />
-
-      <PaymentConfirmDialog
-        open={paymentDialog.open}
-        onOpenChange={(open) => setPaymentDialog(prev => ({ ...prev, open }))}
-        onConfirm={handlePaymentConfirm}
-        itemName={paymentDialog.garmentName}
-      />
-
-      <DeleteConfirmDialog
-        open={deleteDialog.open}
-        onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}
-        onConfirm={handleDeleteConfirm}
-        itemName={deleteDialog.garmentName}
-      />
       
-      <EditGarmentModal
-        open={editGarmentModal.open}
-        onOpenChange={(open) => setEditGarmentModal(prev => ({ ...prev, open }))}
-        garment={editGarmentModal.garment}
-        onEditGarment={handleEditGarment}
-      />
+      <Footer />
     </div>
   );
 };
