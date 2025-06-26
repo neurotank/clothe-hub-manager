@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Check, X, DollarSign, Eye } from 'lucide-react';
+import { Check, X, DollarSign, Eye, Edit } from 'lucide-react';
 import { Garment, Supplier } from '../types';
 import { useIsMobile } from '../hooks/use-mobile';
 
@@ -19,6 +19,7 @@ interface GarmentsTableProps {
   onMarkAsSold?: (garmentId: string, garmentName: string) => void;
   onMarkAsPaid?: (garmentId: string, garmentName: string) => void;
   onDelete: (garmentId: string, garmentName: string) => void;
+  onEdit?: (garment: Garment) => void;
   hideActions?: Array<'markAsSold' | 'markAsPaid'>;
   suppliers?: Supplier[];
   showSupplierColumn?: boolean;
@@ -31,6 +32,7 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
   onMarkAsSold,
   onMarkAsPaid,
   onDelete,
+  onEdit,
   hideActions = [],
   suppliers = [],
   showSupplierColumn = false,
@@ -155,6 +157,17 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
               </TableCell>
               <TableCell className="text-center">
                 <div className="flex flex-col sm:flex-row justify-center space-y-1 sm:space-y-0 sm:space-x-2">
+                  {onEdit && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onEdit(garment)}
+                      className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs px-2 py-1 h-auto min-h-[32px]"
+                    >
+                      <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="ml-1">Editar</span>
+                    </Button>
+                  )}
                   {!garment.is_sold && !hideActions.includes('markAsSold') && onMarkAsSold && (
                     <Button
                       size="sm"

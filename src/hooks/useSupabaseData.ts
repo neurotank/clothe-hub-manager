@@ -359,6 +359,49 @@ export const useSupabaseData = () => {
     }
   };
 
+  const editGarment = async (garmentId: string, garmentData: any) => {
+    try {
+      console.log('Editing garment:', garmentId, garmentData);
+
+      const { data, error } = await supabase
+        .from('garments')
+        .update({
+          code: garmentData.code,
+          name: garmentData.name,
+          size: garmentData.size,
+          purchase_price: garmentData.purchase_price,
+          sale_price: garmentData.sale_price,
+        })
+        .eq('id', garmentId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error editing garment:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo editar la prenda",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Prenda editada correctamente",
+      });
+      
+      // The real-time subscription will handle the update
+    } catch (error) {
+      console.error('Exception editing garment:', error);
+      toast({
+        title: "Error",
+        description: "Error inesperado al editar prenda",
+        variant: "destructive",
+      });
+    }
+  };
+
   const markAsSold = async (garmentId: string, garmentName: string) => {
     try {
       // Get garment and supplier info for WhatsApp
@@ -515,6 +558,7 @@ Tu prenda "${garment.name}" se ha vendido exitosamente.
     addSupplier,
     deleteSupplier,
     addGarment,
+    editGarment,
     markAsSold,
     markAsPaid,
     deleteGarment,

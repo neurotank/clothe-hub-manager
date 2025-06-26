@@ -1,10 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 import GarmentsTable from '../components/GarmentsTable';
 import AddGarmentModal from '../components/AddGarmentModal';
+import EditGarmentModal from '../components/EditGarmentModal';
 import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
 import SearchAndFilters from '../components/SearchAndFilters';
 import { useAuth } from '../contexts/AuthContext';
@@ -26,6 +27,11 @@ const MyGarments: React.FC = () => {
     garmentId: string | null;
     garmentName: string;
   }>({ open: false, garmentId: null, garmentName: '' });
+
+  const [editGarmentModal, setEditGarmentModal] = useState<{
+    open: boolean;
+    garment: Garment | null;
+  }>({ open: false, garment: null });
 
   // Cargar prendas del supplier
   const loadGarments = async () => {
@@ -119,6 +125,43 @@ const MyGarments: React.FC = () => {
     setDeleteDialog({ open: false, garmentId: null, garmentName: '' });
   };
 
+  const handleEditClick = (garment: Garment) => {
+    setEditGarmentModal({
+      open: true,
+      garment
+    });
+  };
+
+  const handleEditGarment = async (garmentId: string, garmentData: any) => {
+    const { data, error } = await supabase
+      .from('garments')
+      .update({
+        code: garmentData.code,
+        name: garmentData.name,
+        size: garmentData.size,
+        purchase_price: garmentData.purchase_price,
+        sale_price: garmentData.sale_price,
+      })
+      .eq('id', garmentId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error editing garment:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo editar la prenda",
+        variant: "destructive",
+      });
+    } else {
+      setGarments(prev => prev.map(g => g.id === garmentId ? data : g));
+      toast({
+        title: "Prenda editada",
+        description: "La prenda se editó exitosamente",
+      });
+    }
+  };
+
   // Filtrar prendas
   const filteredGarments = garments.filter(garment => {
     const matchesSearch = 
@@ -140,20 +183,21 @@ const MyGarments: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="flex-1 flex items-center justify-center">
           <div className="text-center">Cargando...</div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
       
-      <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6">
+      <main className="flex-1 max-w-7xl mx-auto px-4 py-6 sm:px-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Mis Prendas</h1>
           <div className="flex flex-wrap gap-2 text-sm">
@@ -201,6 +245,7 @@ const MyGarments: React.FC = () => {
               <GarmentsTable 
                 garments={filteredGarments}
                 onDelete={handleDeleteClick}
+                onEdit={handleEditClick}
                 hideActions={['markAsSold', 'markAsPaid']}
               />
             )}
@@ -208,11 +253,20 @@ const MyGarments: React.FC = () => {
         </Card>
       </main>
 
+      <Footer />
+
       <DeleteConfirmDialog
         open={deleteDialog.open}
         onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}
         onConfirm={handleDeleteConfirm}
         itemName={deleteDialog.garmentName}
+      />
+
+      <EditGarmentModal
+        open={editGarmentModal.open}
+        onOpenChange={(open) => setEditGarmentModal(prev => ({ ...prev, open }))}
+        garment={editGarmentModal.garment}
+        onEditGarment={handleEditGarment}
       />
     </div>
   );
