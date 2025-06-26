@@ -10,16 +10,13 @@ import EditGarmentModal from '../components/EditGarmentModal';
 import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
 import SearchAndFilters from '../components/SearchAndFilters';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseData } from '../hooks/useSupabaseData';
 import { Garment } from '../types';
 
 const MyGarments: React.FC = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { garments, loading, addGarment, editGarment, deleteGarment } = useSupabaseData();
   
-  const [garments, setGarments] = useState<Garment[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
   
@@ -34,62 +31,14 @@ const MyGarments: React.FC = () => {
     garment: Garment | null;
   }>({ open: false, garment: null });
 
-  // Cargar prendas del supplier
-  const loadGarments = async () => {
+  // Filtrar solo las prendas del usuario actual
+  const userGarments = garments.filter(garment => 
+    user && garment.user_id === user.id
+  );
+
+  const handleAddGarment = async (supplierId: string, garmentData: any) => {
     if (!user) return;
-    
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('garments')
-      .select('*')
-      .eq('user_id', user.id);
-
-    if (error) {
-      console.error('Error loading garments:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las prendas",
-        variant: "destructive",
-      });
-    } else {
-      setGarments(data || []);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    loadGarments();
-  }, [user]);
-
-  const addGarment = async (supplierId: string, garmentData: any) => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('garments')
-      .insert({
-        ...garmentData,
-        user_id: user.id,
-        is_sold: false,
-        payment_status: 'not_available',
-        created_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error adding garment:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo agregar la prenda",
-        variant: "destructive",
-      });
-    } else {
-      setGarments(prev => [...prev, data]);
-      toast({
-        title: "Prenda agregada",
-        description: "La prenda se agregó exitosamente",
-      });
-    }
+    await addGarment(supplierId, garmentData);
   };
 
   const handleDeleteClick = (garmentId: string, garmentName: string) => {
@@ -102,27 +51,7 @@ const MyGarments: React.FC = () => {
 
   const handleDeleteConfirm = async () => {
     if (!deleteDialog.garmentId) return;
-
-    const { error } = await supabase
-      .from('garments')
-      .delete()
-      .eq('id', deleteDialog.garmentId);
-
-    if (error) {
-      console.error('Error deleting garment:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la prenda",
-        variant: "destructive",
-      });
-    } else {
-      setGarments(prev => prev.filter(g => g.id !== deleteDialog.garmentId));
-      toast({
-        title: "Prenda eliminada",
-        description: `${deleteDialog.garmentName} eliminada del inventario`,
-      });
-    }
-    
+    await deleteGarment(deleteDialog.garmentId);
     setDeleteDialog({ open: false, garmentId: null, garmentName: '' });
   };
 
@@ -135,38 +64,12 @@ const MyGarments: React.FC = () => {
 
   const handleEditGarment = async (garmentData: any) => {
     if (!editGarmentModal.garment) return;
-
-    const { data, error } = await supabase
-      .from('garments')
-      .update({
-        code: garmentData.code,
-        name: garmentData.name,
-        size: garmentData.size,
-        purchase_price: garmentData.purchase_price,
-        sale_price: garmentData.sale_price,
-      })
-      .eq('id', editGarmentModal.garment.id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error editing garment:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo editar la prenda",
-        variant: "destructive",
-      });
-    } else {
-      setGarments(prev => prev.map(g => g.id === editGarmentModal.garment?.id ? data : g));
-      toast({
-        title: "Prenda editada",
-        description: "La prenda se editó exitosamente",
-      });
-    }
+    await editGarment(editGarmentModal.garment.id, garmentData);
+    setEditGarmentModal({ open: false, garment: null });
   };
 
   // Filtrar prendas
-  const filteredGarments = garments.filter(garment => {
+  const filteredGarments = userGarments.filter(garment => {
     const matchesSearch = 
       garment.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       garment.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -181,8 +84,8 @@ const MyGarments: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const availableGarments = garments.filter(g => !g.is_sold);
-  const soldGarments = garments.filter(g => g.is_sold);
+  const availableGarments = userGarments.filter(g => !g.is_sold);
+  const soldGarments = userGarments.filter(g => g.is_sold);
 
   if (loading) {
     return (
@@ -215,7 +118,7 @@ const MyGarments: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-2 sm:mb-0">Inventario</h2>
-          <AddGarmentModal supplierId="" onAddGarment={addGarment} />
+          <AddGarmentModal supplierId="" onAddGarment={handleAddGarment} />
         </div>
 
         <SearchAndFilters
@@ -229,20 +132,20 @@ const MyGarments: React.FC = () => {
           <CardHeader>
             <CardTitle>
               Mis Prendas
-              {filteredGarments.length !== garments.length && (
+              {filteredGarments.length !== userGarments.length && (
                 <span className="text-sm font-normal text-gray-500 ml-2">
-                  ({filteredGarments.length} de {garments.length})
+                  ({filteredGarments.length} de {userGarments.length})
                 </span>
               )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {garments.length === 0 ? (
+            {userGarments.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500 mb-4">
                   No tienes prendas registradas
                 </p>
-                <AddGarmentModal supplierId="" onAddGarment={addGarment} />
+                <AddGarmentModal supplierId="" onAddGarment={handleAddGarment} />
               </div>
             ) : (
               <GarmentsTable 
