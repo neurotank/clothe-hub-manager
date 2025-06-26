@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -64,8 +63,15 @@ const MyGarments: React.FC = () => {
 
   const handleEditGarment = async (garmentData: any) => {
     if (!editGarmentModal.garment) return;
-    await editGarment(editGarmentModal.garment.id, garmentData);
-    setEditGarmentModal({ open: false, garment: null });
+    
+    try {
+      await editGarment(editGarmentModal.garment.id, garmentData);
+      // Close modal after successful edit
+      setEditGarmentModal({ open: false, garment: null });
+    } catch (error) {
+      console.error('Error editing garment:', error);
+      // Keep modal open on error so user can retry
+    }
   };
 
   // Filtrar prendas
