@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -132,7 +133,9 @@ const MyGarments: React.FC = () => {
     });
   };
 
-  const handleEditGarment = async (garmentId: string, garmentData: any) => {
+  const handleEditGarment = async (garmentData: any) => {
+    if (!editGarmentModal.garment) return;
+
     const { data, error } = await supabase
       .from('garments')
       .update({
@@ -142,7 +145,7 @@ const MyGarments: React.FC = () => {
         purchase_price: garmentData.purchase_price,
         sale_price: garmentData.sale_price,
       })
-      .eq('id', garmentId)
+      .eq('id', editGarmentModal.garment.id)
       .select()
       .single();
 
@@ -154,7 +157,7 @@ const MyGarments: React.FC = () => {
         variant: "destructive",
       });
     } else {
-      setGarments(prev => prev.map(g => g.id === garmentId ? data : g));
+      setGarments(prev => prev.map(g => g.id === editGarmentModal.garment?.id ? data : g));
       toast({
         title: "Prenda editada",
         description: "La prenda se editó exitosamente",
