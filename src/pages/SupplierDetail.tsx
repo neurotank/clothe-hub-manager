@@ -313,7 +313,7 @@ const SupplierDetail = () => {
       <AddGarmentModal
         isOpen={showAddGarment}
         onClose={() => setShowAddGarment(false)}
-        supplier={supplier}
+        supplierId={supplier.id}
       />
 
       <SellConfirmDialog
@@ -352,7 +352,7 @@ const SupplierDetail = () => {
           setShowEditDialog(open);
           if (!open) setSelectedGarment(null);
         }}
-        onSubmit={handleConfirmEdit}
+        onEditGarment={handleConfirmEdit}
         garment={selectedGarment}
       />
     </div>
