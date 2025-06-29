@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -63,7 +62,6 @@ const SupplierDetail = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // Paginación
   const totalPages = Math.ceil(filteredGarments.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -100,6 +98,13 @@ const SupplierDetail = () => {
       </div>
     );
   }
+
+  // Use the addGarment function from the hook directly
+  const handleAddGarment = async (supplierId: string, garmentData: any) => {
+    console.log('SupplierDetail: Adding garment with data:', garmentData);
+    await addGarment(supplierId, garmentData);
+    setShowAddGarment(false);
+  };
 
   const handleSellGarment = (garmentId: string, garmentName: string) => {
     const garment = supplierGarments.find(g => g.id === garmentId);
@@ -242,7 +247,6 @@ const SupplierDetail = () => {
               />
             </div>
 
-            {/* Paginación */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-2 mt-6">
                 <Button
@@ -272,11 +276,12 @@ const SupplierDetail = () => {
 
       <Footer />
 
-      {/* Modales y diálogos */}
+      {/* Pass our custom handler to AddGarmentModal */}
       <AddGarmentModal
         isOpen={showAddGarment}
         onClose={() => setShowAddGarment(false)}
         supplierId={supplier.id}
+        onAddGarment={handleAddGarment}
       />
 
       <SellConfirmDialog

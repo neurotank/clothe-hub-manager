@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -50,12 +49,18 @@ const AddGarmentModal: React.FC<AddGarmentModalProps> = ({
       sale_price: parseFloat(formData.sale_price),
     };
 
+    console.log('AddGarmentModal: Submitting garment data:', garmentData);
+
+    // Use the passed onAddGarment prop if available, otherwise use the hook function
     if (onAddGarment) {
+      console.log('AddGarmentModal: Using custom onAddGarment function');
       await onAddGarment(supplierId, garmentData);
     } else {
+      console.log('AddGarmentModal: Using default addGarment function');
       await addGarment(supplierId, garmentData);
     }
     
+    // Reset form
     setFormData({
       name: '',
       code: '',
@@ -64,6 +69,7 @@ const AddGarmentModal: React.FC<AddGarmentModalProps> = ({
       sale_price: '',
     });
     
+    // Close modal
     if (isControlled && onClose) {
       onClose();
     } else {
@@ -77,6 +83,7 @@ const AddGarmentModal: React.FC<AddGarmentModalProps> = ({
   };
 
   const handleClose = () => {
+    // Reset form when closing
     setFormData({
       name: '',
       code: '',
