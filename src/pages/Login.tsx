@@ -58,7 +58,7 @@ const Login = () => {
                   required
                 />
               </div>
-              <div className="grid gap-2 mt-2">
+              <div className="grid gap-2 mt-4">
                 <Label htmlFor="password">Contraseña</Label>
                 <Input
                   id="password"
