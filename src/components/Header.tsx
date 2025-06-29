@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, BarChart3, Package } from 'lucide-react';
+import { LogOut, BarChart3, Package, Menu } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -54,26 +54,39 @@ const Header = () => {
             </nav>
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            {/* Mobile admin button - only show on dashboard and if user is admin */}
             {isMobile && location.pathname === '/dashboard' && isAdmin && (
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => navigate('/admin')}
-                className="text-sm"
+                className="text-xs px-2"
               >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Admin
+                <BarChart3 className="w-4 h-4" />
               </Button>
             )}
             
-            <Button
-              variant="outline"
-              onClick={handleSignOut}
-              className="text-sm"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Cerrar Sesión
-            </Button>
+            {/* Logout button - icon only on mobile, full button on desktop */}
+            {isMobile ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSignOut}
+                className="px-2"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={handleSignOut}
+                className="text-sm"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Cerrar Sesión
+              </Button>
+            )}
           </div>
         </div>
       </div>
