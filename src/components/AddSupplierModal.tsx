@@ -19,11 +19,33 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onClose }) 
     phone: '',
   });
   const [loading, setLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
+
+  const validatePhone = (phone: string) => {
+    // Solo números, sin espacios ni caracteres especiales
+    const phoneRegex = /^\d{10,11}$/;
+    
+    if (!phone) {
+      return 'El teléfono es requerido';
+    }
+    
+    if (!phoneRegex.test(phone)) {
+      return 'El teléfono debe tener 10 u 11 dígitos numéricos';
+    }
+    
+    return '';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name.trim() || !formData.phone.trim()) {
+    if (!formData.name.trim()) {
+      return;
+    }
+
+    const phoneValidationError = validatePhone(formData.phone);
+    if (phoneValidationError) {
+      setPhoneError(phoneValidationError);
       return;
     }
 
@@ -32,6 +54,7 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onClose }) 
     
     if (result) {
       setFormData({ name: '', surname: '', phone: '' });
+      setPhoneError('');
       onClose();
     }
     setLoading(false);
@@ -39,10 +62,22 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onClose }) 
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Limpiar error de teléfono cuando el usuario empiece a escribir
+    if (field === 'phone' && phoneError) {
+      setPhoneError('');
+    }
+  };
+
+  const handlePhoneChange = (value: string) => {
+    // Solo permitir números
+    const numericValue = value.replace(/\D/g, '');
+    handleInputChange('phone', numericValue);
   };
 
   const handleClose = () => {
     setFormData({ name: '', surname: '', phone: '' });
+    setPhoneError('');
     onClose();
   };
 
@@ -83,10 +118,17 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onClose }) 
               id="phone"
               type="tel"
               value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder="Ingresa el número de teléfono"
+              onChange={(e) => handlePhoneChange(e.target.value)}
+              placeholder="Ej: 3816345678 o 38384743147"
               required
+              maxLength={11}
             />
+            {phoneError && (
+              <p className="text-sm text-red-600 mt-1">{phoneError}</p>
+            )}
+            <p className="text-xs text-gray-500 mt-1">
+              Solo números, 10 u 11 dígitos
+            </p>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
