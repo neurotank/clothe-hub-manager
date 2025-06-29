@@ -4,15 +4,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useSupabaseData } from '../hooks/useSupabaseData';
 
 interface AddSupplierModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onAddSupplier?: (formData: any) => Promise<any>;
 }
 
-const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onClose }) => {
-  const { addSupplier } = useSupabaseData();
+const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onClose, onAddSupplier }) => {
   const [formData, setFormData] = useState({
     name: '',
     surname: '',
@@ -50,7 +49,12 @@ const AddSupplierModal: React.FC<AddSupplierModalProps> = ({ isOpen, onClose }) 
     }
 
     setLoading(true);
-    const result = await addSupplier(formData);
+    
+    let result = null;
+    if (onAddSupplier) {
+      // Use the prop function if provided
+      result = await onAddSupplier(formData);
+    }
     
     if (result) {
       setFormData({ name: '', surname: '', phone: '' });

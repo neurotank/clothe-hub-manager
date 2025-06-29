@@ -28,6 +28,14 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  const handleAddSupplier = async (supplierData: any) => {
+    const result = await addSupplier(supplierData);
+    if (result) {
+      setShowAddSupplier(false);
+    }
+    return result;
+  };
+
   const handleDeleteSupplier = (supplierId: string) => {
     const supplier = suppliers.find(s => s.id === supplierId);
     if (supplier) {
@@ -181,6 +189,7 @@ const Dashboard = () => {
       <AddSupplierModal
         isOpen={showAddSupplier}
         onClose={() => setShowAddSupplier(false)}
+        onAddSupplier={handleAddSupplier}
       />
 
       <DeleteSupplierDialog
