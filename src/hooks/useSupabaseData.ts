@@ -12,7 +12,6 @@ export const useSupabaseData = () => {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
   const channelRef = useRef<any>(null);
-  const isSubscribedRef = useRef(false);
 
   // Get user ID and role from users table
   const getUserData = useCallback(async () => {
@@ -129,7 +128,7 @@ export const useSupabaseData = () => {
 
   // Set up real-time subscriptions with proper cleanup
   useEffect(() => {
-    if (!user?.id || isSubscribedRef.current) return;
+    if (!user?.id) return;
 
     console.log('Setting up real-time subscriptions for user:', user.id);
 
@@ -142,8 +141,10 @@ export const useSupabaseData = () => {
           channelRef.current = null;
         }
 
-        // Create a new channel
-        const channel = supabase.channel(`db-changes-${user.id}-${Date.now()}`);
+        // Create a new channel with a unique name
+        const channelName = `db-changes-${user.id}-${Date.now()}`;
+        console.log('Creating channel:', channelName);
+        const channel = supabase.channel(channelName);
         
         channel
           .on(
@@ -155,15 +156,8 @@ export const useSupabaseData = () => {
             },
             async (payload) => {
               console.log('Suppliers real-time update:', payload);
-              try {
-                const { data } = await supabase
-                  .from('suppliers')
-                  .select('*')
-                  .order('name', { ascending: true });
-                if (data) setSuppliers(data);
-              } catch (error) {
-                console.error('Error in suppliers real-time update:', error);
-              }
+              // Refresh suppliers data immediately
+              await fetchSuppliers();
             }
           )
           .on(
@@ -175,22 +169,12 @@ export const useSupabaseData = () => {
             },
             async (payload) => {
               console.log('Garments real-time update:', payload);
-              try {
-                const { data } = await supabase
-                  .from('garments')
-                  .select('*')
-                  .order('created_at', { ascending: false });
-                if (data) setGarments(data);
-              } catch (error) {
-                console.error('Error in garments real-time update:', error);
-              }
+              // Refresh garments data immediately
+              await fetchGarments();
             }
           )
           .subscribe((status) => {
-            console.log('Subscription status:', status);
-            if (status === 'SUBSCRIBED') {
-              isSubscribedRef.current = true;
-            }
+            console.log('Real-time subscription status:', status);
           });
 
         channelRef.current = channel;
@@ -207,9 +191,8 @@ export const useSupabaseData = () => {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
-      isSubscribedRef.current = false;
     };
-  }, [user?.id]);
+  }, [user?.id, fetchSuppliers, fetchGarments]);
 
   const addSupplier = async (supplierData: SupplierFormData) => {
     try {
@@ -249,7 +232,10 @@ export const useSupabaseData = () => {
         description: "Proveedor agregado correctamente",
       });
       
-      // The real-time subscription will handle the update
+      // Force immediate refresh in case real-time doesn't work
+      console.log('Forcing suppliers refresh after add');
+      await fetchSuppliers();
+      
       return data;
     } catch (error) {
       console.error('Exception adding supplier:', error);
@@ -296,7 +282,8 @@ export const useSupabaseData = () => {
         description: "Proveedor eliminado correctamente",
       });
 
-      // The real-time subscription will handle the update
+      // Force immediate refresh
+      await fetchSuppliers();
     } catch (error) {
       console.error('Exception deleting supplier:', error);
       toast({
@@ -348,7 +335,8 @@ export const useSupabaseData = () => {
         description: "Prenda agregada correctamente",
       });
       
-      // The real-time subscription will handle the update
+      // Force immediate refresh
+      await fetchGarments();
     } catch (error) {
       console.error('Exception adding garment:', error);
       toast({
@@ -391,7 +379,8 @@ export const useSupabaseData = () => {
         description: "Prenda editada correctamente",
       });
       
-      // The real-time subscription will handle the update
+      // Force immediate refresh
+      await fetchGarments();
     } catch (error) {
       console.error('Exception editing garment:', error);
       toast({
@@ -428,7 +417,8 @@ export const useSupabaseData = () => {
         description: "Prenda actualizada correctamente",
       });
       
-      // The real-time subscription will handle the update
+      // Force immediate refresh
+      await fetchGarments();
     } catch (error) {
       console.error('Exception updating garment:', error);
       toast({
@@ -476,7 +466,8 @@ export const useSupabaseData = () => {
         description: "Prenda marcada como vendida",
       });
 
-      // The real-time subscription will handle the update
+      // Force immediate refresh
+      await fetchGarments();
     } catch (error) {
       console.error('Exception marking as sold:', error);
       toast({
@@ -535,7 +526,8 @@ Tu prenda "${garment.name}" se ha vendido exitosamente.
         description: "Pago registrado correctamente",
       });
 
-      // The real-time subscription will handle the update
+      // Force immediate refresh
+      await fetchGarments();
     } catch (error) {
       console.error('Exception marking as paid:', error);
       toast({
@@ -568,7 +560,8 @@ Tu prenda "${garment.name}" se ha vendido exitosamente.
         description: "Prenda eliminada correctamente",
       });
 
-      // The real-time subscription will handle the update
+      // Force immediate refresh
+      await fetchGarments();
     } catch (error) {
       console.error('Exception deleting garment:', error);
       toast({
