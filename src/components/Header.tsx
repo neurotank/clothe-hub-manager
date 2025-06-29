@@ -59,7 +59,6 @@ const Header = () => {
             {isMobile && location.pathname === '/dashboard' && isAdmin && (
               <Button
                 variant="outline"
-                size="sm"
                 onClick={() => navigate('/admin')}
                 className="text-xs px-2"
               >
