@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Supplier } from '../types';
 import { Button } from '@/components/ui/button';
-import { Eye, Trash2 } from 'lucide-react';
+import { Eye, Trash2, Pen } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -18,12 +18,14 @@ interface SuppliersTableProps {
   suppliers: Supplier[];
   onSupplierClick: (supplierId: string) => void;
   onDeleteSupplier: (supplierId: string) => void;
+  onEditSupplier: (supplier: Supplier) => void;
 }
 
 const SuppliersTable: React.FC<SuppliersTableProps> = ({ 
   suppliers, 
   onSupplierClick, 
-  onDeleteSupplier 
+  onDeleteSupplier,
+  onEditSupplier
 }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null);
@@ -65,7 +67,7 @@ const SuppliersTable: React.FC<SuppliersTableProps> = ({
                   <TableHead className="min-w-[150px]">Apellido</TableHead>
                   <TableHead className="min-w-[120px]">Teléfono</TableHead>
                   <TableHead className="min-w-[130px]">Fecha de Registro</TableHead>
-                  <TableHead className="text-center min-w-[200px]">Acciones</TableHead>
+                  <TableHead className="text-center min-w-[250px]">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -88,6 +90,15 @@ const SuppliersTable: React.FC<SuppliersTableProps> = ({
                         >
                           <Eye className="w-4 h-4 mr-2" />
                           Ver Detalles
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onEditSupplier(supplier)}
+                          className="text-green-600 border-green-600 hover:bg-green-50"
+                        >
+                          <Pen className="w-4 h-4 mr-2" />
+                          Editar
                         </Button>
                         <Button
                           size="sm"

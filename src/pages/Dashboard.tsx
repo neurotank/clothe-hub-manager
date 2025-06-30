@@ -7,6 +7,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import SuppliersTable from '../components/SuppliersTable';
 import AddSupplierModal from '../components/AddSupplierModal';
+import EditSupplierModal from '../components/EditSupplierModal';
 import DeleteSupplierDialog from '../components/DeleteSupplierDialog';
 import { useSupabaseData } from '../hooks/useSupabaseData';
 import { Supplier } from '../types';
@@ -17,11 +18,13 @@ const Dashboard = () => {
     suppliers,
     garments,
     addSupplier,
+    editSupplier,
     deleteSupplier,
     loading
   } = useSupabaseData();
 
   const [showAddSupplier, setShowAddSupplier] = useState(false);
+  const [showEditSupplier, setShowEditSupplier] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,6 +37,17 @@ const Dashboard = () => {
       setShowAddSupplier(false);
     }
     return result;
+  };
+
+  const handleEditSupplier = (supplier: Supplier) => {
+    setSelectedSupplier(supplier);
+    setShowEditSupplier(true);
+  };
+
+  const handleSaveEditSupplier = async (supplierId: string, data: { name: string; surname: string; phone: string }) => {
+    await editSupplier(supplierId, data);
+    setShowEditSupplier(false);
+    setSelectedSupplier(null);
   };
 
   const handleDeleteSupplier = (supplierId: string) => {
@@ -154,6 +168,7 @@ const Dashboard = () => {
               suppliers={currentSuppliers}
               onSupplierClick={(supplierId) => navigate(`/supplier/${supplierId}`)}
               onDeleteSupplier={handleDeleteSupplier}
+              onEditSupplier={handleEditSupplier}
             />
           </div>
 
@@ -190,6 +205,13 @@ const Dashboard = () => {
         isOpen={showAddSupplier}
         onClose={() => setShowAddSupplier(false)}
         onAddSupplier={handleAddSupplier}
+      />
+
+      <EditSupplierModal
+        isOpen={showEditSupplier}
+        onClose={() => setShowEditSupplier(false)}
+        supplier={selectedSupplier}
+        onSave={handleSaveEditSupplier}
       />
 
       <DeleteSupplierDialog
