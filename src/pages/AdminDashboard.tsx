@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Package, DollarSign, TrendingUp, Users, Percent, Target, BarChart3 } from 'lucide-react';
@@ -12,6 +11,7 @@ import SearchAndFilters from '../components/SearchAndFilters';
 import SellConfirmDialog from '../components/SellConfirmDialog';
 import { useSupabaseData } from '../hooks/useSupabaseData';
 import { useIsMobile } from '../hooks/use-mobile';
+import { PaymentType } from '../types';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -124,7 +124,7 @@ const AdminDashboard = () => {
     setShowSellDialog(true);
   };
 
-  const handleConfirmSale = async (paymentType: string) => {
+  const handleConfirmSale = async (paymentType: PaymentType) => {
     if (selectedGarment) {
       await markAsSold(selectedGarment.id, selectedGarment.name, paymentType);
       setShowSellDialog(false);
