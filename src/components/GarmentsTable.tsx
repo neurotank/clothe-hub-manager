@@ -66,6 +66,24 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
     }
   };
 
+  const getPaymentTypeBadge = (paymentType?: string) => {
+    if (!paymentType) return <span className="text-gray-400">-</span>;
+    
+    const typeMap = {
+      'efectivo': { label: 'Efectivo', color: 'bg-green-100 text-green-800' },
+      'qr': { label: 'QR', color: 'bg-blue-100 text-blue-800' },
+      'debito': { label: 'Débito', color: 'bg-purple-100 text-purple-800' },
+      'credito': { label: 'Crédito', color: 'bg-orange-100 text-orange-800' }
+    };
+    
+    const typeInfo = typeMap[paymentType as keyof typeof typeMap];
+    return (
+      <Badge variant="secondary" className={typeInfo?.color || 'bg-gray-100 text-gray-600'}>
+        {typeInfo?.label || paymentType}
+      </Badge>
+    );
+  };
+
   const getSupplierName = (supplierId: string) => {
     const foundSupplier = suppliers.find(s => s.id === supplierId);
     return foundSupplier ? `${foundSupplier.name} ${foundSupplier.surname}` : 'N/A';
@@ -98,6 +116,7 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
                 {showSupplierColumn && <TableHead className="hidden md:table-cell min-w-[150px]">Proveedor</TableHead>}
                 <TableHead className="text-center min-w-[100px]">Estado</TableHead>
                 <TableHead className="text-center min-w-[100px]">Pago</TableHead>
+                <TableHead className="text-center min-w-[100px]">Tipo de Pago</TableHead>
                 <TableHead className="text-center min-w-[200px]">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -157,6 +176,9 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
                   </TableCell>
                   <TableCell className="text-center">
                     {getPaymentBadge(garment.payment_status)}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {getPaymentTypeBadge(garment.payment_type)}
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex flex-col sm:flex-row justify-center space-y-1 sm:space-y-0 sm:space-x-2">

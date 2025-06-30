@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,11 +10,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 interface SellConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
+  onConfirm: (paymentType: string) => void;
   itemName: string;
 }
 
@@ -24,6 +26,20 @@ const SellConfirmDialog: React.FC<SellConfirmDialogProps> = ({
   onConfirm,
   itemName
 }) => {
+  const [paymentType, setPaymentType] = useState<string>('');
+
+  const handleConfirm = () => {
+    if (paymentType) {
+      onConfirm(paymentType);
+      setPaymentType(''); // Reset after confirm
+    }
+  };
+
+  const handleCancel = () => {
+    setPaymentType(''); // Reset on cancel
+    onOpenChange(false);
+  };
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -34,11 +50,30 @@ const SellConfirmDialog: React.FC<SellConfirmDialogProps> = ({
             Se enviará un mensaje de WhatsApp a la propietaria informando sobre la venta.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        
+        <div className="my-4">
+          <Label htmlFor="payment-type" className="text-sm font-medium">
+            Tipo de pago
+          </Label>
+          <Select value={paymentType} onValueChange={setPaymentType}>
+            <SelectTrigger className="mt-2">
+              <SelectValue placeholder="Seleccionar tipo de pago" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="efectivo">Efectivo</SelectItem>
+              <SelectItem value="qr">QR</SelectItem>
+              <SelectItem value="debito">Débito</SelectItem>
+              <SelectItem value="credito">Crédito</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel onClick={handleCancel}>Cancelar</AlertDialogCancel>
           <AlertDialogAction 
-            onClick={onConfirm}
-            className="bg-green-600 hover:bg-green-700"
+            onClick={handleConfirm}
+            disabled={!paymentType}
+            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
           >
             Sí, marcar como vendida
           </AlertDialogAction>

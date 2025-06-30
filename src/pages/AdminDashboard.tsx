@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Package, DollarSign, TrendingUp, Users, Percent, Target, BarChart3, Edit } from 'lucide-react';
+import { ArrowLeft, Package, DollarSign, TrendingUp, Users, Percent, Target, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Header from '../components/Header';
@@ -8,10 +9,9 @@ import Footer from '../components/Footer';
 import GarmentsTable from '../components/GarmentsTable';
 import DateRangeFilter from '../components/DateRangeFilter';
 import SearchAndFilters from '../components/SearchAndFilters';
-import EditSupplierModal from '../components/EditSupplierModal';
+import SellConfirmDialog from '../components/SellConfirmDialog';
 import { useSupabaseData } from '../hooks/useSupabaseData';
 import { useIsMobile } from '../hooks/use-mobile';
-import { Supplier } from '../types';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -19,9 +19,9 @@ const AdminDashboard = () => {
   const {
     suppliers,
     getAllSoldGarments,
+    markAsSold,
     markAsPaid,
     deleteGarment,
-    editSupplier,
     loading
   } = useSupabaseData();
   
@@ -30,8 +30,8 @@ const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [showSellDialog, setShowSellDialog] = useState(false);
+  const [selectedGarment, setSelectedGarment] = useState<{ id: string; name: string } | null>(null);
   const itemsPerPage = 10;
 
   const allSoldGarments = getAllSoldGarments();
@@ -119,13 +119,17 @@ const AdminDashboard = () => {
     setSelectedDate(undefined);
   };
 
-  const handleEditSupplier = (supplier: Supplier) => {
-    setEditingSupplier(supplier);
-    setIsEditModalOpen(true);
+  const handleMarkAsSold = (garmentId: string, garmentName: string) => {
+    setSelectedGarment({ id: garmentId, name: garmentName });
+    setShowSellDialog(true);
   };
 
-  const handleSaveSupplier = (supplierId: string, data: { name: string; surname: string; phone: string }) => {
-    editSupplier(supplierId, data);
+  const handleConfirmSale = async (paymentType: string) => {
+    if (selectedGarment) {
+      await markAsSold(selectedGarment.id, selectedGarment.name, paymentType);
+      setShowSellDialog(false);
+      setSelectedGarment(null);
+    }
   };
 
   if (loading) {
@@ -242,29 +246,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Lista de proveedores con opción de editar */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Proveedores</h3>
-          <div className="space-y-2">
-            {suppliers.map((supplier) => (
-              <div key={supplier.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                <div>
-                  <p className="font-medium">{supplier.name} {supplier.surname}</p>
-                  <p className="text-sm text-gray-600">{supplier.phone}</p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEditSupplier(supplier)}
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Editar
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Gráfico de barras */}
         <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
           <div className="flex items-center mb-6">
@@ -323,6 +304,7 @@ const AdminDashboard = () => {
             <div className="overflow-hidden">
               <GarmentsTable
                 garments={currentGarments}
+                onMarkAsSold={handleMarkAsSold}
                 onMarkAsPaid={markAsPaid}
                 onDelete={deleteGarment}
                 suppliers={suppliers}
@@ -361,11 +343,11 @@ const AdminDashboard = () => {
       
       <Footer />
 
-      <EditSupplierModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        supplier={editingSupplier}
-        onSave={handleSaveSupplier}
+      <SellConfirmDialog
+        open={showSellDialog}
+        onOpenChange={setShowSellDialog}
+        onConfirm={handleConfirmSale}
+        itemName={selectedGarment?.name || ''}
       />
     </div>
   );

@@ -66,8 +66,8 @@ export const useSupabaseData = () => {
   };
 
   // Enhanced markAsSold that passes required data
-  const enhancedMarkAsSold = async (garmentId: string, garmentName: string) => {
-    await markAsSold(garmentId, garmentName, garments, suppliers);
+  const enhancedMarkAsSold = async (garmentId: string, garmentName: string, paymentType: string) => {
+    await markAsSold(garmentId, garmentName, garments, suppliers, paymentType);
   };
 
   // Enhanced deleteSupplier that passes garments data

@@ -17,6 +17,7 @@ export type Database = {
           is_sold: boolean | null
           name: string
           payment_status: Database["public"]["Enums"]["payment_status"] | null
+          payment_type: Database["public"]["Enums"]["payment_type"] | null
           purchase_price: number
           sale_price: number
           size: string
@@ -31,6 +32,7 @@ export type Database = {
           is_sold?: boolean | null
           name: string
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          payment_type?: Database["public"]["Enums"]["payment_type"] | null
           purchase_price: number
           sale_price: number
           size: string
@@ -45,6 +47,7 @@ export type Database = {
           is_sold?: boolean | null
           name?: string
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          payment_type?: Database["public"]["Enums"]["payment_type"] | null
           purchase_price?: number
           sale_price?: number
           size?: string
@@ -151,6 +154,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "supplier"
       payment_status: "not_available" | "pending" | "paid"
+      payment_type: "efectivo" | "qr" | "debito" | "credito"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -268,6 +272,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "supplier"],
       payment_status: ["not_available", "pending", "paid"],
+      payment_type: ["efectivo", "qr", "debito", "credito"],
     },
   },
 } as const

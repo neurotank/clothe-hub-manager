@@ -26,6 +26,7 @@ export interface Garment {
   is_sold: boolean;
   sold_at?: string;
   payment_status: 'not_available' | 'pending' | 'paid';
+  payment_type?: 'efectivo' | 'qr' | 'debito' | 'credito';
   user_id?: string;
   created_at: string;
   updated_at?: string;
@@ -40,4 +41,5 @@ export interface GarmentFormData {
 }
 
 export type PaymentStatus = 'not_available' | 'pending' | 'paid';
+export type PaymentType = 'efectivo' | 'qr' | 'debito' | 'credito';
 export type UserRole = 'admin' | 'supplier';

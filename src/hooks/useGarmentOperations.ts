@@ -30,7 +30,7 @@ Tu prenda "${garment.name}" se ha vendido exitosamente.
     }
   };
 
-  const markAsSold = async (garmentId: string, garmentName: string, garments: any[], suppliers: Supplier[]) => {
+  const markAsSold = async (garmentId: string, garmentName: string, garments: any[], suppliers: Supplier[], paymentType: string) => {
     try {
       // Get garment and supplier info for WhatsApp
       const garment = garments.find(g => g.id === garmentId);
@@ -41,6 +41,7 @@ Tu prenda "${garment.name}" se ha vendido exitosamente.
         .update({ 
           is_sold: true, 
           payment_status: 'pending',
+          payment_type: paymentType,
           sold_at: new Date().toISOString()
         })
         .eq('id', garmentId)

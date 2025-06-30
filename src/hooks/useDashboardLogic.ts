@@ -86,13 +86,15 @@ export const useDashboardLogic = () => {
     currentPage,
     totalPages,
     
-    // Handlers
+    // State setters
     setShowAddSupplier,
     setShowEditSupplier,
     setShowDeleteDialog,
     setSelectedSupplier,
     setSearchTerm,
     setCurrentPage,
+    
+    // Handlers
     handleAddSupplier,
     handleEditSupplier,
     handleSaveEditSupplier,
