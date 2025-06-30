@@ -28,7 +28,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   onClearFilters
 }) => {
   const months = [
-    { value: '', label: 'Todos los meses' },
+    { value: 'all', label: 'Todos los meses' },
     { value: '2025-01', label: 'Enero 2025' },
     { value: '2025-02', label: 'Febrero 2025' },
     { value: '2025-03', label: 'Marzo 2025' },
@@ -49,13 +49,21 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
     { value: '2026-06', label: 'Junio 2026' },
   ];
 
-  const hasFilters = selectedMonth || selectedDate;
+  const hasFilters = selectedMonth && selectedMonth !== 'all' || selectedDate;
+
+  const handleMonthChange = (value: string) => {
+    if (value === 'all') {
+      onMonthChange('');
+    } else {
+      onMonthChange(value);
+    }
+  };
 
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
       <div className="flex items-center space-x-2">
         <CalendarIcon className="w-4 h-4 text-gray-500" />
-        <Select value={selectedMonth} onValueChange={onMonthChange}>
+        <Select value={selectedMonth || 'all'} onValueChange={handleMonthChange}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Seleccionar mes" />
           </SelectTrigger>
