@@ -1,7 +1,7 @@
 
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Supplier } from '../types';
+import { Supplier, PaymentType } from '../types';
 
 export const useGarmentOperations = (fetchGarments: () => Promise<void>) => {
   const { toast } = useToast();
@@ -30,7 +30,7 @@ Tu prenda "${garment.name}" se ha vendido exitosamente.
     }
   };
 
-  const markAsSold = async (garmentId: string, garmentName: string, garments: any[], suppliers: Supplier[], paymentType: string) => {
+  const markAsSold = async (garmentId: string, garmentName: string, garments: any[], suppliers: Supplier[], paymentType: PaymentType) => {
     try {
       // Get garment and supplier info for WhatsApp
       const garment = garments.find(g => g.id === garmentId);

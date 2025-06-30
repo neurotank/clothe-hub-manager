@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,7 @@ import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
 import EditGarmentModal from '../components/EditGarmentModal';
 import { useSupabaseData } from '../hooks/useSupabaseData';
 import { useIsMobile } from '../hooks/use-mobile';
-import { Garment } from '../types';
+import { Garment, PaymentType } from '../types';
 
 const SupplierDetail = () => {
   const { id } = useParams();
@@ -114,9 +115,9 @@ const SupplierDetail = () => {
     }
   };
 
-  const handleConfirmSell = async () => {
+  const handleConfirmSell = async (paymentType: PaymentType) => {
     if (selectedGarment) {
-      await markAsSold(selectedGarment.id, selectedGarment.name);
+      await markAsSold(selectedGarment.id, selectedGarment.name, paymentType);
       setShowSellDialog(false);
       setSelectedGarment(null);
     }

@@ -12,11 +12,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { PaymentType } from '../types';
 
 interface SellConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (paymentType: string) => void;
+  onConfirm: (paymentType: PaymentType) => void;
   itemName: string;
 }
 
@@ -26,11 +27,11 @@ const SellConfirmDialog: React.FC<SellConfirmDialogProps> = ({
   onConfirm,
   itemName
 }) => {
-  const [paymentType, setPaymentType] = useState<string>('');
+  const [paymentType, setPaymentType] = useState<PaymentType | ''>('');
 
   const handleConfirm = () => {
     if (paymentType) {
-      onConfirm(paymentType);
+      onConfirm(paymentType as PaymentType);
       setPaymentType(''); // Reset after confirm
     }
   };
@@ -55,7 +56,7 @@ const SellConfirmDialog: React.FC<SellConfirmDialogProps> = ({
           <Label htmlFor="payment-type" className="text-sm font-medium">
             Tipo de pago
           </Label>
-          <Select value={paymentType} onValueChange={setPaymentType}>
+          <Select value={paymentType} onValueChange={(value) => setPaymentType(value as PaymentType)}>
             <SelectTrigger className="mt-2">
               <SelectValue placeholder="Seleccionar tipo de pago" />
             </SelectTrigger>

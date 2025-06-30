@@ -6,6 +6,7 @@ import { useSuppliers } from './useSuppliers';
 import { useGarments } from './useGarments';
 import { useGarmentOperations } from './useGarmentOperations';
 import { useRealtimeSubscriptions } from './useRealtimeSubscriptions';
+import { PaymentType } from '../types';
 
 export const useSupabaseData = () => {
   const { user } = useAuth();
@@ -66,7 +67,7 @@ export const useSupabaseData = () => {
   };
 
   // Enhanced markAsSold that passes required data
-  const enhancedMarkAsSold = async (garmentId: string, garmentName: string, paymentType: string) => {
+  const enhancedMarkAsSold = async (garmentId: string, garmentName: string, paymentType: PaymentType) => {
     await markAsSold(garmentId, garmentName, garments, suppliers, paymentType);
   };
 
