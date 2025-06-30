@@ -248,6 +248,48 @@ export const useSupabaseData = () => {
     }
   };
 
+  const editSupplier = async (supplierId: string, supplierData: { name: string; surname: string; phone: string }) => {
+    try {
+      console.log('Editing supplier:', supplierId, supplierData);
+
+      const { data, error } = await supabase
+        .from('suppliers')
+        .update({
+          name: supplierData.name,
+          surname: supplierData.surname,
+          phone: supplierData.phone,
+        })
+        .eq('id', supplierId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error editing supplier:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo editar el proveedor",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Proveedor editado correctamente",
+      });
+      
+      // Force immediate refresh
+      await fetchSuppliers();
+    } catch (error) {
+      console.error('Exception editing supplier:', error);
+      toast({
+        title: "Error",
+        description: "Error inesperado al editar proveedor",
+        variant: "destructive",
+      });
+    }
+  };
+
   const deleteSupplier = async (supplierId: string) => {
     try {
       // First, check if supplier has any garments
@@ -586,6 +628,7 @@ Tu prenda "${garment.name}" se ha vendido exitosamente.
     loading,
     userRole,
     addSupplier,
+    editSupplier,
     deleteSupplier,
     addGarment,
     editGarment,

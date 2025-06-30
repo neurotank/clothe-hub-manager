@@ -1,16 +1,17 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Package, DollarSign, TrendingUp, Users, Percent, Target, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Package, DollarSign, TrendingUp, Users, Percent, Target, BarChart3, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import GarmentsTable from '../components/GarmentsTable';
-import MonthFilter from '../components/MonthFilter';
+import DateRangeFilter from '../components/DateRangeFilter';
 import SearchAndFilters from '../components/SearchAndFilters';
+import EditSupplierModal from '../components/EditSupplierModal';
 import { useSupabaseData } from '../hooks/useSupabaseData';
 import { useIsMobile } from '../hooks/use-mobile';
+import { Supplier } from '../types';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -20,23 +21,34 @@ const AdminDashboard = () => {
     getAllSoldGarments,
     markAsPaid,
     deleteGarment,
+    editSupplier,
     loading
   } = useSupabaseData();
   
   const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'sold' | 'pending_payment' | 'paid'>('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const itemsPerPage = 10;
 
   const allSoldGarments = getAllSoldGarments();
 
   const filteredGarments = allSoldGarments.filter(garment => {
     const soldDate = garment.sold_at ? new Date(garment.sold_at) : new Date(garment.created_at);
+    
+    // Filter by month
     const matchesMonth = selectedMonth ? (() => {
       const [year, month] = selectedMonth.split('-');
       return soldDate.getFullYear() === parseInt(year) && 
              soldDate.getMonth() === parseInt(month) - 1;
+    })() : true;
+
+    // Filter by specific date
+    const matchesDate = selectedDate ? (() => {
+      return soldDate.toDateString() === selectedDate.toDateString();
     })() : true;
 
     const matchesSearch = 
@@ -48,7 +60,7 @@ const AdminDashboard = () => {
       (statusFilter === 'pending_payment' && garment.payment_status === 'pending') ||
       (statusFilter === 'paid' && garment.payment_status === 'paid');
 
-    return matchesMonth && matchesSearch && matchesStatus;
+    return matchesMonth && matchesDate && matchesSearch && matchesStatus;
   });
 
   // Calcular estadísticas
@@ -102,6 +114,20 @@ const AdminDashboard = () => {
     }).format(amount);
   };
 
+  const handleClearFilters = () => {
+    setSelectedMonth('');
+    setSelectedDate(undefined);
+  };
+
+  const handleEditSupplier = (supplier: Supplier) => {
+    setEditingSupplier(supplier);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveSupplier = (supplierId: string, data: { name: string; surname: string; phone: string }) => {
+    editSupplier(supplierId, data);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -141,16 +167,16 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Métricas principales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+        {/* Métricas principales - Máximo 3 por fila */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg shadow-sm border">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
                 <DollarSign className="w-6 h-6 text-blue-600" />
               </div>
-              <div className="ml-4">
+              <div className="ml-4 min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Ingresos</p>
-                <p className="text-xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</p>
+                <p className="text-xl font-bold text-gray-900 truncate">{formatCurrency(totalRevenue)}</p>
               </div>
             </div>
           </div>
@@ -160,9 +186,9 @@ const AdminDashboard = () => {
               <div className="p-2 bg-green-100 rounded-lg">
                 <TrendingUp className="w-6 h-6 text-green-600" />
               </div>
-              <div className="ml-4">
+              <div className="ml-4 min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Ganancia</p>
-                <p className="text-xl font-bold text-gray-900">{formatCurrency(totalProfit)}</p>
+                <p className="text-xl font-bold text-gray-900 truncate">{formatCurrency(totalProfit)}</p>
               </div>
             </div>
           </div>
@@ -172,7 +198,7 @@ const AdminDashboard = () => {
               <div className="p-2 bg-purple-100 rounded-lg">
                 <Percent className="w-6 h-6 text-purple-600" />
               </div>
-              <div className="ml-4">
+              <div className="ml-4 min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Margen</p>
                 <p className="text-xl font-bold text-gray-900">{profitMargin.toFixed(1)}%</p>
               </div>
@@ -184,9 +210,9 @@ const AdminDashboard = () => {
               <div className="p-2 bg-orange-100 rounded-lg">
                 <Target className="w-6 h-6 text-orange-600" />
               </div>
-              <div className="ml-4">
+              <div className="ml-4 min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Ticket Prom.</p>
-                <p className="text-xl font-bold text-gray-900">{formatCurrency(averageTicket)}</p>
+                <p className="text-xl font-bold text-gray-900 truncate">{formatCurrency(averageTicket)}</p>
               </div>
             </div>
           </div>
@@ -196,7 +222,7 @@ const AdminDashboard = () => {
               <div className="p-2 bg-indigo-100 rounded-lg">
                 <Package className="w-6 h-6 text-indigo-600" />
               </div>
-              <div className="ml-4">
+              <div className="ml-4 min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Prendas</p>
                 <p className="text-xl font-bold text-gray-900">{filteredGarments.length}</p>
               </div>
@@ -208,11 +234,34 @@ const AdminDashboard = () => {
               <div className="p-2 bg-pink-100 rounded-lg">
                 <Users className="w-6 h-6 text-pink-600" />
               </div>
-              <div className="ml-4">
+              <div className="ml-4 min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Proveedores</p>
                 <p className="text-xl font-bold text-gray-900">{suppliers.length}</p>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Lista de proveedores con opción de editar */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Proveedores</h3>
+          <div className="space-y-2">
+            {suppliers.map((supplier) => (
+              <div key={supplier.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                <div>
+                  <p className="font-medium">{supplier.name} {supplier.surname}</p>
+                  <p className="text-sm text-gray-600">{supplier.phone}</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEditSupplier(supplier)}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Editar
+                </Button>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -252,9 +301,12 @@ const AdminDashboard = () => {
                   {filteredGarments.length} prendas encontradas
                 </p>
               </div>
-              <MonthFilter
+              <DateRangeFilter
                 selectedMonth={selectedMonth}
                 onMonthChange={setSelectedMonth}
+                selectedDate={selectedDate}
+                onDateChange={setSelectedDate}
+                onClearFilters={handleClearFilters}
               />
             </div>
           </div>
@@ -308,6 +360,13 @@ const AdminDashboard = () => {
       </main>
       
       <Footer />
+
+      <EditSupplierModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        supplier={editingSupplier}
+        onSave={handleSaveSupplier}
+      />
     </div>
   );
 };
