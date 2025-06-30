@@ -86,7 +86,7 @@ export const useDashboardLogic = () => {
     currentPage,
     totalPages,
     
-    // State setters
+    // State setters - these were missing before
     setShowAddSupplier,
     setShowEditSupplier,
     setShowDeleteDialog,
