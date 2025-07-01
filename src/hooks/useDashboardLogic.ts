@@ -1,9 +1,11 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Supplier } from '../types';
 import { useSupabaseData } from './useSupabaseData';
 
 export const useDashboardLogic = () => {
+  const navigate = useNavigate();
   const {
     suppliers,
     garments,
@@ -25,6 +27,8 @@ export const useDashboardLogic = () => {
     const result = await addSupplier(supplierData);
     if (result) {
       setShowAddSupplier(false);
+      // Navigate to the new supplier's detail page
+      navigate(`/supplier/${result.id}`);
     }
     return result;
   };
