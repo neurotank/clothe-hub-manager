@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -267,55 +266,35 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
                       <TableCell colSpan={4} className="p-0">
                         <CollapsibleContent>
                           <div className="px-4 py-3 bg-gray-50 border-t">
-                            <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div className="space-y-2 text-sm">
                               <div>
-                                <span className="font-medium text-gray-600">Talle:</span>
-                                <div className="text-gray-700">{garment.size}</div>
+                                <span className="font-medium text-gray-600">Talle:</span> {garment.size}
                               </div>
                               <div>
-                                <span className="font-medium text-gray-600">P. Compra:</span>
-                                <div className="font-semibold text-blue-600">
-                                  {formatPrice(garment.purchase_price)}
-                                </div>
+                                <span className="font-medium text-gray-600">P. Compra:</span> <span className="font-semibold text-blue-600">{formatPrice(garment.purchase_price)}</span>
                               </div>
                               <div>
-                                <span className="font-medium text-gray-600">P. Venta:</span>
-                                <div className="font-semibold text-green-600">
-                                  {formatPrice(garment.sale_price)}
-                                </div>
+                                <span className="font-medium text-gray-600">P. Venta:</span> <span className="font-semibold text-green-600">{formatPrice(garment.sale_price)}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <span className="font-medium text-gray-600 mr-2">Estado Pago:</span>
+                                {getPaymentBadge(garment.payment_status)}
+                              </div>
+                              <div className="flex items-center">
+                                <span className="font-medium text-gray-600 mr-2">Tipo Pago:</span>
+                                {getPaymentTypeBadge(garment.payment_type)}
                               </div>
                               <div>
-                                <span className="font-medium text-gray-600">Estado Pago:</span>
-                                <div className="mt-1">
-                                  {getPaymentBadge(garment.payment_status)}
-                                </div>
-                              </div>
-                              <div>
-                                <span className="font-medium text-gray-600">Tipo Pago:</span>
-                                <div className="mt-1">
-                                  {getPaymentTypeBadge(garment.payment_type)}
-                                </div>
-                              </div>
-                              <div>
-                                <span className="font-medium text-gray-600">Creado:</span>
-                                <div className="text-gray-700">
-                                  {formatDate(garment.created_at)}
-                                </div>
+                                <span className="font-medium text-gray-600">Creado:</span> {formatDate(garment.created_at)}
                               </div>
                               {garment.sold_at && (
-                                <div className="col-span-2">
-                                  <span className="font-medium text-gray-600">Vendido:</span>
-                                  <div className="text-gray-700">
-                                    {formatDate(garment.sold_at)}
-                                  </div>
+                                <div>
+                                  <span className="font-medium text-gray-600">Vendido:</span> {formatDate(garment.sold_at)}
                                 </div>
                               )}
                               {showSupplierColumn && garment.supplier_id && (
-                                <div className="col-span-2">
-                                  <span className="font-medium text-gray-600">Proveedor:</span>
-                                  <div className="text-gray-700">
-                                    {getSupplierName(garment.supplier_id)}
-                                  </div>
+                                <div>
+                                  <span className="font-medium text-gray-600">Proveedor:</span> {getSupplierName(garment.supplier_id)}
                                 </div>
                               )}
                             </div>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Supplier } from '../types';
 import { Button } from '@/components/ui/button';
@@ -174,24 +173,15 @@ const SuppliersTable: React.FC<SuppliersTableProps> = ({
                         <TableCell colSpan={4} className="p-0">
                           <CollapsibleContent>
                             <div className="px-4 py-3 bg-gray-50 border-t">
-                              <div className="grid grid-cols-1 gap-3 text-sm">
+                              <div className="space-y-2 text-sm">
                                 <div>
-                                  <span className="font-medium text-gray-600">Nombre Completo:</span>
-                                  <div className="text-gray-700 mt-1">
-                                    {supplier.name} {supplier.surname}
-                                  </div>
+                                  <span className="font-medium text-gray-600">Nombre Completo:</span> {supplier.name} {supplier.surname}
                                 </div>
                                 <div>
-                                  <span className="font-medium text-gray-600">Teléfono:</span>
-                                  <div className="text-gray-700 mt-1">
-                                    {supplier.phone}
-                                  </div>
+                                  <span className="font-medium text-gray-600">Teléfono:</span> {supplier.phone}
                                 </div>
                                 <div>
-                                  <span className="font-medium text-gray-600">Fecha de Registro:</span>
-                                  <div className="text-gray-700 mt-1">
-                                    {formatDate(supplier.created_at)}
-                                  </div>
+                                  <span className="font-medium text-gray-600">Fecha de Registro:</span> {formatDate(supplier.created_at)}
                                 </div>
                               </div>
                             </div>
