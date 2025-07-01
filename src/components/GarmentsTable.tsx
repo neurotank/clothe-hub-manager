@@ -117,211 +117,219 @@ const GarmentsTable: React.FC<GarmentsTableProps> = ({
 
   return (
     <div className="w-full">
-      <ScrollArea className="w-full rounded-md border">
-        <div className="min-w-full">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {isMobile && <TableHead className="w-8"></TableHead>}
-                <TableHead className="min-w-[100px]">Código</TableHead>
-                <TableHead className="min-w-[150px]">Nombre</TableHead>
-                {!isMobile && <TableHead className="min-w-[80px]">Talle</TableHead>}
-                <TableHead className="min-w-[120px]">P. Compra</TableHead>
-                {!isMobile && <TableHead className="min-w-[120px]">P. Venta</TableHead>}
-                {!isMobile && <TableHead className="min-w-[100px]">Estado</TableHead>}
-                {!isMobile && showSupplierColumn && <TableHead className="min-w-[150px]">Proveedor</TableHead>}
-                <TableHead className="text-center min-w-[150px]">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {garments.map((garment) => (
-                <Collapsible
-                  key={garment.id}
-                  open={expandedRows.has(garment.id)}
-                  onOpenChange={() => toggleRow(garment.id)}
-                  asChild
-                >
-                  <>
-                    <TableRow 
-                      className={`hover:bg-gray-50 ${garment.is_sold && garment.payment_status === 'paid' ? 'opacity-60' : ''}`}
-                    >
-                      {isMobile && (
-                        <TableCell className="w-8 p-2">
-                          <CollapsibleTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                              {expandedRows.has(garment.id) ? (
-                                <ChevronDown className="h-4 w-4" />
-                              ) : (
-                                <ChevronRight className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </CollapsibleTrigger>
-                        </TableCell>
+      <div className="w-full rounded-md border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {isMobile && <TableHead className="w-8"></TableHead>}
+              <TableHead className={isMobile ? "min-w-[120px]" : "min-w-[100px]"}>
+                {isMobile ? "Prenda" : "Código"}
+              </TableHead>
+              <TableHead className={isMobile ? "min-w-[100px]" : "min-w-[150px]"}>
+                {isMobile ? "Estado" : "Nombre"}
+              </TableHead>
+              {!isMobile && <TableHead className="min-w-[80px]">Talle</TableHead>}
+              {!isMobile && <TableHead className="min-w-[120px]">P. Compra</TableHead>}
+              {!isMobile && <TableHead className="min-w-[120px]">P. Venta</TableHead>}
+              {!isMobile && <TableHead className="min-w-[100px]">Estado</TableHead>}
+              {!isMobile && showSupplierColumn && <TableHead className="min-w-[150px]">Proveedor</TableHead>}
+              <TableHead className="text-center min-w-[120px]">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {garments.map((garment) => (
+              <Collapsible
+                key={garment.id}
+                open={expandedRows.has(garment.id)}
+                onOpenChange={() => toggleRow(garment.id)}
+                asChild
+              >
+                <>
+                  <TableRow 
+                    className={`hover:bg-gray-50 ${garment.is_sold && garment.payment_status === 'paid' ? 'opacity-60' : ''}`}
+                  >
+                    {isMobile && (
+                      <TableCell className="w-8 p-2">
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            {expandedRows.has(garment.id) ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </CollapsibleTrigger>
+                      </TableCell>
+                    )}
+                    <TableCell className="font-medium">
+                      {isMobile ? (
+                        <div>
+                          <div className="font-medium text-sm">{garment.code}</div>
+                          <div className="text-xs text-gray-500 mt-1 truncate max-w-[100px]">
+                            {garment.name}
+                          </div>
+                        </div>
+                      ) : (
+                        garment.code
                       )}
-                      <TableCell className="font-medium">
-                        <div>
-                          <div className="font-medium">{garment.code}</div>
-                          {isMobile && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              Talle: {garment.size}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{garment.name}</div>
-                          {isMobile && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              <Badge 
-                                variant={garment.is_sold ? "secondary" : "default"}
-                                className={`text-xs ${garment.is_sold ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-800'}`}
-                              >
-                                {garment.is_sold ? 'Vendida' : 'Disponible'}
-                              </Badge>
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      {!isMobile && <TableCell>{garment.size}</TableCell>}
+                    </TableCell>
+                    <TableCell>
+                      {isMobile ? (
+                        <Badge 
+                          variant={garment.is_sold ? "secondary" : "default"}
+                          className={`text-xs ${garment.is_sold ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-800'}`}
+                        >
+                          {garment.is_sold ? 'Vendida' : 'Disponible'}
+                        </Badge>
+                      ) : (
+                        garment.name
+                      )}
+                    </TableCell>
+                    {!isMobile && <TableCell>{garment.size}</TableCell>}
+                    {!isMobile && (
                       <TableCell>
                         <span className="font-semibold text-blue-600">
                           {formatPrice(garment.purchase_price)}
                         </span>
                       </TableCell>
-                      {!isMobile && (
-                        <TableCell>
-                          <span className="font-semibold text-green-600">
-                            {formatPrice(garment.sale_price)}
-                          </span>
-                        </TableCell>
-                      )}
-                      {!isMobile && (
-                        <TableCell className="text-center">
-                          <Badge 
-                            variant={garment.is_sold ? "secondary" : "default"}
-                            className={garment.is_sold ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-800'}
-                          >
-                            {garment.is_sold ? 'Vendida' : 'Disponible'}
-                          </Badge>
-                        </TableCell>
-                      )}
-                      {!isMobile && showSupplierColumn && (
-                        <TableCell>
-                          {garment.supplier_id ? getSupplierName(garment.supplier_id) : 'N/A'}
-                        </TableCell>
-                      )}
+                    )}
+                    {!isMobile && (
+                      <TableCell>
+                        <span className="font-semibold text-green-600">
+                          {formatPrice(garment.sale_price)}
+                        </span>
+                      </TableCell>
+                    )}
+                    {!isMobile && (
                       <TableCell className="text-center">
-                        <div className="flex flex-col sm:flex-row justify-center space-y-1 sm:space-y-0 sm:space-x-2">
-                          {onEdit && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => onEdit(garment)}
-                              className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs px-2 py-1 h-auto min-h-[32px]"
-                            >
-                              <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                              <span className="ml-1">Editar</span>
-                            </Button>
-                          )}
-                          {!garment.is_sold && !hideActions.includes('markAsSold') && onMarkAsSold && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => onMarkAsSold(garment.id, garment.name)}
-                              className="text-green-600 border-green-600 hover:bg-green-50 text-xs px-2 py-1 h-auto min-h-[32px]"
-                            >
-                              <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                              <span className="ml-1">
-                                {isMobile ? 'Vendido' : 'Vender'}
-                              </span>
-                            </Button>
-                          )}
-                          {garment.is_sold && garment.payment_status === 'pending' && !hideActions.includes('markAsPaid') && onMarkAsPaid && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => onMarkAsPaid(garment.id, garment.name)}
-                              className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs px-2 py-1 h-auto min-h-[32px]"
-                            >
-                              <DollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
-                              <span className="ml-1">
-                                {isMobile ? 'Pagado' : 'Pagar'}
-                              </span>
-                            </Button>
-                          )}
+                        <Badge 
+                          variant={garment.is_sold ? "secondary" : "default"}
+                          className={garment.is_sold ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-800'}
+                        >
+                          {garment.is_sold ? 'Vendida' : 'Disponible'}
+                        </Badge>
+                      </TableCell>
+                    )}
+                    {!isMobile && showSupplierColumn && (
+                      <TableCell>
+                        {garment.supplier_id ? getSupplierName(garment.supplier_id) : 'N/A'}
+                      </TableCell>
+                    )}
+                    <TableCell className="text-center">
+                      <div className={`flex ${isMobile ? 'flex-col space-y-1' : 'flex-row justify-center space-x-2'}`}>
+                        {onEdit && (
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => onDelete(garment.id, garment.name)}
-                            className="text-red-600 border-red-600 hover:bg-red-50 text-xs px-2 py-1 h-auto min-h-[32px]"
+                            onClick={() => onEdit(garment)}
+                            className={`text-blue-600 border-blue-600 hover:bg-blue-50 ${isMobile ? 'text-xs px-2 py-1 h-auto min-h-[28px]' : ''}`}
                           >
-                            <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span className="ml-1">Eliminar</span>
+                            <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                            {!isMobile && <span className="ml-1">Editar</span>}
                           </Button>
-                        </div>
+                        )}
+                        {!garment.is_sold && !hideActions.includes('markAsSold') && onMarkAsSold && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onMarkAsSold(garment.id, garment.name)}
+                            className={`text-green-600 border-green-600 hover:bg-green-50 ${isMobile ? 'text-xs px-2 py-1 h-auto min-h-[28px]' : ''}`}
+                          >
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4" />
+                            {!isMobile && <span className="ml-1">Vender</span>}
+                          </Button>
+                        )}
+                        {garment.is_sold && garment.payment_status === 'pending' && !hideActions.includes('markAsPaid') && onMarkAsPaid && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onMarkAsPaid(garment.id, garment.name)}
+                            className={`text-blue-600 border-blue-600 hover:bg-blue-50 ${isMobile ? 'text-xs px-2 py-1 h-auto min-h-[28px]' : ''}`}
+                          >
+                            <DollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
+                            {!isMobile && <span className="ml-1">Pagar</span>}
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onDelete(garment.id, garment.name)}
+                          className={`text-red-600 border-red-600 hover:bg-red-50 ${isMobile ? 'text-xs px-2 py-1 h-auto min-h-[28px]' : ''}`}
+                        >
+                          <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                          {!isMobile && <span className="ml-1">Eliminar</span>}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  {isMobile && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="p-0">
+                        <CollapsibleContent>
+                          <div className="px-4 py-3 bg-gray-50 border-t">
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div>
+                                <span className="font-medium text-gray-600">Talle:</span>
+                                <div className="text-gray-700">{garment.size}</div>
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-600">P. Compra:</span>
+                                <div className="font-semibold text-blue-600">
+                                  {formatPrice(garment.purchase_price)}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-600">P. Venta:</span>
+                                <div className="font-semibold text-green-600">
+                                  {formatPrice(garment.sale_price)}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-600">Estado Pago:</span>
+                                <div className="mt-1">
+                                  {getPaymentBadge(garment.payment_status)}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-600">Tipo Pago:</span>
+                                <div className="mt-1">
+                                  {getPaymentTypeBadge(garment.payment_type)}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-600">Creado:</span>
+                                <div className="text-gray-700">
+                                  {formatDate(garment.created_at)}
+                                </div>
+                              </div>
+                              {garment.sold_at && (
+                                <div className="col-span-2">
+                                  <span className="font-medium text-gray-600">Vendido:</span>
+                                  <div className="text-gray-700">
+                                    {formatDate(garment.sold_at)}
+                                  </div>
+                                </div>
+                              )}
+                              {showSupplierColumn && garment.supplier_id && (
+                                <div className="col-span-2">
+                                  <span className="font-medium text-gray-600">Proveedor:</span>
+                                  <div className="text-gray-700">
+                                    {getSupplierName(garment.supplier_id)}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </CollapsibleContent>
                       </TableCell>
                     </TableRow>
-                    {isMobile && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="p-0">
-                          <CollapsibleContent>
-                            <div className="px-4 py-3 bg-gray-50 border-t">
-                              <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                  <span className="font-medium text-gray-600">Precio Venta:</span>
-                                  <div className="font-semibold text-green-600">
-                                    {formatPrice(garment.sale_price)}
-                                  </div>
-                                </div>
-                                <div>
-                                  <span className="font-medium text-gray-600">Estado Pago:</span>
-                                  <div className="mt-1">
-                                    {getPaymentBadge(garment.payment_status)}
-                                  </div>
-                                </div>
-                                <div>
-                                  <span className="font-medium text-gray-600">Tipo Pago:</span>
-                                  <div className="mt-1">
-                                    {getPaymentTypeBadge(garment.payment_type)}
-                                  </div>
-                                </div>
-                                <div>
-                                  <span className="font-medium text-gray-600">Creado:</span>
-                                  <div className="text-gray-700">
-                                    {formatDate(garment.created_at)}
-                                  </div>
-                                </div>
-                                {garment.sold_at && (
-                                  <div>
-                                    <span className="font-medium text-gray-600">Vendido:</span>
-                                    <div className="text-gray-700">
-                                      {formatDate(garment.sold_at)}
-                                    </div>
-                                  </div>
-                                )}
-                                {showSupplierColumn && garment.supplier_id && (
-                                  <div>
-                                    <span className="font-medium text-gray-600">Proveedor:</span>
-                                    <div className="text-gray-700">
-                                      {getSupplierName(garment.supplier_id)}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </CollapsibleContent>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </>
-                </Collapsible>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+                  )}
+                </>
+              </Collapsible>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };
